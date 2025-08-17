@@ -8,23 +8,23 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject private var app: AppState
+    @Environment(\.colorScheme) private var colorScheme
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-        .onAppear {
-                TestAPI.testFetchStations()
-                TestAPI.testFetchCarrier()
-                TestAPI.testFetchCopyright()
-                TestAPI.testFetchNearestSettlement()
-                TestAPI.testFetchSearch()
-                TestAPI.testFetchStationSchedule()
-                TestAPI.testFetchStationsList()
-                TestAPI.testFetchThread()
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+                MainTabView()
+                
+                if colorScheme == .light {
+                    Rectangle()
+                        .fill(Color.ypGray)
+                        .frame(height: 0.5)
+                        .padding(.bottom, geo.safeAreaInsets.bottom + 48)
+                        .ignoresSafeArea()
+                }
+            }
+            .edgesIgnoringSafeArea(.bottom)
         }
     }
 }
