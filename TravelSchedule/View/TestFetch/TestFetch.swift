@@ -26,7 +26,7 @@ enum TestAPI {
                     client: try client,
                     apikey: apiKey
                 )
-
+                
                 print("Fetching stations...")
                 let stations = try await service.getNearestStations(
                     lat: 59.864177,
@@ -47,7 +47,7 @@ enum TestAPI {
                     client: try client,
                     apikey: apiKey
                 )
-
+                
                 print("Fetching carriers...")
                 let carriers = try await service.getCarrierInfo(code: "680")
                 
@@ -156,5 +156,36 @@ enum TestAPI {
                 print("Error fetching thread: \(error)")
             }
         }
+    }
+    
+    static func testFetchCarrier2() {
+        Task {
+            do {
+                let service = CarrierService(
+                    client: try client,
+                    apikey: apiKey
+                )
+                
+                print("Fetching carriers...")
+                let carriers = try await service.getCarrierInfo(code: "680")
+                print("Successfully fetched carriers")
+                
+                // Вызов твоего метода для просмотра структуры:
+                service.debugCarrierStructure(carriers)
+                
+            } catch {
+                print("Error fetching carriers: \(error)")
+            }
+        }
+    }
+}
+
+enum APIFactory {
+    static func makeSearchService() throws -> SearchServiceProtocol {
+        try SearchService(client: TestAPI.client, apikey: TestAPI.apiKey)
+    }
+    
+    static func makeCarrierService() throws -> CarrierServiceProtocol {
+        try CarrierService(client: TestAPI.client, apikey: TestAPI.apiKey)
     }
 }
