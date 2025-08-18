@@ -37,7 +37,6 @@ func loadWithGlobalError<T>(
             let state = classifyError(error)
             await MainActor.run {
                 app.showErrorAndRetry(state, delay: delay, maxRetries: maxRetries) { _ in
-                    // На повторе просто заново вызываем себя
                     loadWithGlobalError(
                         app: app,
                         delay: delay,

@@ -28,9 +28,8 @@ struct ScheduleFilterView: View {
             .scrollContentBackground(.hidden)
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color(.systemBackground), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { dismiss() } label: {

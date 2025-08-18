@@ -12,23 +12,9 @@ struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .bottom) {
-                MainTabView()
-                
-                if colorScheme == .light {
-                    Rectangle()
-                        .fill(Color.ypGray)
-                        .frame(height: 0.5)
-                        .padding(.bottom, geo.safeAreaInsets.bottom + 48)
-                        .ignoresSafeArea()
-                }
-            }
+        MainTabView()
             .edgesIgnoringSafeArea(.bottom)
-        }
     }
 }
 
-#Preview {
-    ContentView()
-}
+#Preview { ContentView().environmentObject(AppState()) }

@@ -20,6 +20,7 @@ struct MainTabView: View {
     }
     
     @EnvironmentObject private var app: AppState
+    @Environment(\.colorScheme) private var colorScheme
     @State private var path: [Route] = []
     
     private var isTabBarHidden: Bool {
@@ -27,50 +28,78 @@ struct MainTabView: View {
         return false
     }
     
+    init() {
+        let tab = UITabBarAppearance()
+        tab.configureWithOpaqueBackground()
+        tab.backgroundEffect = nil
+        tab.shadowColor = .clear
+        tab.shadowImage = UIImage()
+        UITabBar.appearance().standardAppearance = tab
+        UITabBar.appearance().scrollEdgeAppearance = tab
+        
+        let nav = UINavigationBarAppearance()
+        nav.configureWithOpaqueBackground()
+        nav.backgroundEffect = nil
+        nav.shadowColor = .clear
+        UINavigationBar.appearance().standardAppearance = nav
+        UINavigationBar.appearance().scrollEdgeAppearance = nav
+    }
+    
     var body: some View {
-        TabView {
-            
-            NavigationStack {
-                RouteInputSectionView(
-                    actionButton: {},
-                    actionSearchButton: { from, to in
-                        path.append(Route.carriers(from: from, to: to))
-                    }
-                )
-                .navigationDestination(for: Route.self) { route in
-                    switch route {
-                        case let .carriers(from, to):
-                            if let search = try? APIFactory.makeSearchService(),
-                               let carrier = try? APIFactory.makeCarrierService() {
-                                CarrierListView(headerFrom: from,
-                                                headerTo: to,
-                                                searchService: search,
-                                                carrierService: carrier
-                                )
-                            } else {
-                                ErrorStateView(state: .server)
-                                    .task { app.showError(.server) }
-                            }
+        ZStack(alignment: .bottom) {
+            TabView {
+                
+                NavigationStack(path: $path) {
+                    RouteInputSectionView(
+                        actionButton: {},
+                        actionSearchButton: { from, to in
+                            path.append(.carriers(from: from, to: to))
+                        }
+                    )
+                    .navigationDestination(for: Route.self) { route in
+                        switch route {
+                            case let .carriers(from, to):
+                                if let search = try? APIFactory.makeSearchService(),
+                                   let carrier = try? APIFactory.makeCarrierService() {
+                                    CarrierListView(headerFrom: from,
+                                                    headerTo: to,
+                                                    searchService: search,
+                                                    carrierService: carrier
+                                    )
+                                } else {
+                                    ErrorStateView(state: .server)
+                                        .task { app.showError(.server) }
+                                }
+                        }
                     }
                 }
-            }
-            .toolbar(isTabBarHidden ? .hidden : .visible, for: .tabBar)
-            .tabItem {
-                Image(systemName: Constants.firstTabSystemImage)
-                    .renderingMode(.template)
-                    .frame(width: Constants.tabIconSize, height: Constants.tabIconSize)
-            }
-            
-            SettingsView()
                 .tabItem {
-                    Image(Constants.secondTabAssetImage)
+                    Image(systemName: Constants.firstTabSystemImage)
                         .renderingMode(.template)
                         .frame(width: Constants.tabIconSize, height: Constants.tabIconSize)
                 }
+                
+                SettingsView()
+                    .tabItem {
+                        Image(Constants.secondTabAssetImage)
+                            .renderingMode(.template)
+                            .frame(width: Constants.tabIconSize, height: Constants.tabIconSize)
+                    }
+            }
+            .toolbar(isTabBarHidden ? .hidden : .visible, for: .tabBar)
+            .toolbarBackground(isTabBarHidden ? .hidden : .visible, for: .tabBar)
+            .tint(.ypBlack)
+            .accentColor(.ypGray)
+            .withGlobalErrors(app)
+            
+            if colorScheme == .light && !isTabBarHidden {
+                Rectangle()
+                    .fill(Color.ypGray)
+                    .frame(height: 1.0 / UIScreen.main.scale)
+                    .ignoresSafeArea(edges: .bottom)
+                    .padding(.bottom, 83)
+            }
         }
-        .tint(.ypBlack)
-        .accentColor(.ypGray)
-        .withGlobalErrors(app)
     }
 }
 
