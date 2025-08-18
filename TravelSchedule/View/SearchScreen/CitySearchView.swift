@@ -11,23 +11,37 @@ struct CitySearchView: View {
     
     // MARK: - Constants
     private enum Constants {
-        static let horizontalPadding: CGFloat = 16
-        static let searchCorner: CGFloat = 10
-        static let rowHeight: CGFloat = 60
-        static let rowVerticalPadding: CGFloat = 4
-        static let searchTopPadding: CGFloat = 8
-        static let searchBottomPadding: CGFloat = 4
-        static let notFoundFont: CGFloat = 24
-        static let backButtonSize: CGFloat = 44
-        static let chevronRightOpacity: Double = 0.6
-        static let cityFontSize: CGFloat = 17
-        static let notFoundTopOffset: CGFloat = 228
-        static let clearIcon = "xmark.circle.fill"
-        static let clearHitPadding: CGFloat = 8
-        static let clearTrailingPadding: CGFloat = 14
-        static let textTrailingInsetForClear: CGFloat = 34
+        enum Padding {
+            static let horizontal: CGFloat = 16
+            static let rowVertical: CGFloat = 4
+            static let searchTop: CGFloat = 8
+            static let searchBottom: CGFloat = 4
+            static let clearHit: CGFloat = 8
+            static let clearTrailing: CGFloat = 14
+        }
+        enum Size {
+            static let rowHeight: CGFloat = 60
+            static let backButton: CGFloat = 44
+        }
+        enum CornerRadius {
+            static let search: CGFloat = 10
+        }
+        enum FontSize {
+            static let notFound: CGFloat = 24
+            static let city: CGFloat = 17
+        }
+        enum Opacity {
+            static let chevronRight: Double = 0.6
+        }
+        enum Offset {
+            static let notFoundTop: CGFloat = 228
+        }
+        enum ClearIcon {
+            static let name = "xmark.circle.fill"
+            static let textTrailingInset: CGFloat = 34
+        }
     }
-    // MARK: - Props
+    
     let onSelect: (String) -> Void
     
     @EnvironmentObject private var app: AppState
@@ -76,55 +90,23 @@ struct CitySearchView: View {
         }
     }
     
-    // MARK: - Elements
-//    private var searchField: some View {
-//        HStack {
-//            Image(systemName: "magnifyingglass").foregroundColor(.gray)
-//            TextField("Введите запрос", text: $searchText)
-//                .foregroundColor(.primary)
-//                .disableAutocorrection(true)
-//                .textInputAutocapitalization(.never)
-//                .padding(.trailing, Constants.textTrailingInsetForClear)
-//        }
-//        .padding(10)
-//        .background(Color.gray.opacity(0.15))
-//        .cornerRadius(Constants.searchCorner)
-//        .padding(.horizontal, Constants.horizontalPadding)
-//        .padding(.top, Constants.searchTopPadding)
-//        .padding(.bottom, Constants.searchBottomPadding)
-//        .overlay(alignment: .trailing) {
-//            if !searchText.isEmpty {
-//                Button {
-//                    withAnimation(.default) { searchText = "" }
-//                } label: {
-//                    Image(systemName: Constants.clearIcon)
-//                        .foregroundColor(.secondary)
-//                        .imageScale(.medium)
-//                        .padding(Constants.clearHitPadding)
-//                }
-//                .padding(.trailing, Constants.clearTrailingPadding)
-//                .accessibilityLabel("Очистить")
-//            }
-//        }
-//    }
-    
     private var searchField: some View {
         SearchTextField(text: $searchText, placeholder: "Введите запрос")
-            .padding(.horizontal, Constants.horizontalPadding)
-            .padding(.top, Constants.searchTopPadding)
-            .padding(.bottom, Constants.searchBottomPadding)
+            .padding(.horizontal, Constants.Padding.horizontal)
+            .padding(.top, Constants.Padding.searchTop)
+            .padding(.bottom, Constants.Padding.searchBottom)
     }
     
     private var cityList: some View {
         List(filteredCities, id: \.self) { city in
             HStack {
                 Text(city)
-                    .font(.system(size: Constants.cityFontSize, weight: .regular))
+                    .font(.system(size: Constants.FontSize.city, weight: .regular))
                     .foregroundColor(.ypBlack)
                 Spacer()
                 Image(systemName: "chevron.right").foregroundColor(.ypBlack)
             }
-            .frame(height: Constants.rowHeight)
+            .frame(height: Constants.Size.rowHeight)
             .contentShape(Rectangle())
             .onTapGesture {
                 selectedCity = city
@@ -138,9 +120,9 @@ struct CitySearchView: View {
     
     private var notFoundView: some View {
         VStack {
-            Spacer().frame(height: Constants.notFoundTopOffset)
+            Spacer().frame(height: Constants.Offset.notFoundTop)
             Text("Город не найден")
-                .font(.system(size: Constants.notFoundFont, weight: .bold))
+                .font(.system(size: Constants.FontSize.notFound, weight: .bold))
                 .foregroundColor(.ypBlack)
             Spacer()
         }

@@ -10,20 +10,32 @@ import SwiftUI
 struct CarrierListView: View {
     
     private enum Constants {
-        static let viewSpacing: CGFloat = 12
-        static let horizontalPadding: CGFloat = 16
-        static let titleTopPadding: CGFloat = 12
-        static let titleFontSize: CGFloat = 24
-        static let rowVerticalInset: CGFloat = 8
-        static let rowHorizontalInset: CGFloat = 16
-        static let listBottomPadding: CGFloat = 10
-        static let bottomButtonFontSize: CGFloat = 17
-        static let bottomButtonHeight: CGFloat = 60
-        static let bottomButtonCorner: CGFloat = 16
-        static let bottomPadding: CGFloat = 24
-        static let retryDelay: TimeInterval = 10
-        static let maxRetries: Int = 3
-        static let mockDelayNs: UInt64 = 400_000_000
+        enum Spacing {
+            static let view: CGFloat = 12
+            static let horizontal: CGFloat = 16
+            static let titleTop: CGFloat = 12
+            static let rowVerticalInset: CGFloat = 8
+            static let rowHorizontalInset: CGFloat = 16
+            static let listBottom: CGFloat = 10
+            static let bottom: CGFloat = 24
+        }
+        enum FontSize {
+            static let title: CGFloat = 24
+            static let bottomButton: CGFloat = 17
+        }
+        enum Size {
+            static let bottomButtonHeight: CGFloat = 60
+        }
+        enum Corner {
+            static let bottomButton: CGFloat = 16
+        }
+        enum Retry {
+            static let delay: TimeInterval = 10
+            static let maxRetries: Int = 3
+        }
+        enum Mock {
+            static let delayNs: UInt64 = 400_000_000
+        }
     }
     
     let headerFrom: String
@@ -45,12 +57,12 @@ struct CarrierListView: View {
         ZStack {
             Color(.systemBackground).ignoresSafeArea()
             
-            VStack(alignment: .leading, spacing: Constants.viewSpacing) {
+            VStack(alignment: .leading, spacing: Constants.Spacing.view) {
                 Text("\(headerFrom) → \(headerTo)")
-                    .font(.system(size: Constants.titleFontSize, weight: .bold))
+                    .font(.system(size: Constants.FontSize.title, weight: .bold))
                     .foregroundColor(.ypBlack)
-                    .padding(.horizontal, Constants.horizontalPadding)
-                    .padding(.top, Constants.titleTopPadding)
+                    .padding(.horizontal, Constants.Spacing.horizontal)
+                    .padding(.top, Constants.Spacing.titleTop)
                 
                 if isLoading {
                     ProgressView()
@@ -70,22 +82,23 @@ struct CarrierListView: View {
                 }
             }
         }
-        .toolbarBackground(Color(.systemBackground), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar(.hidden, for: .tabBar)
+        .toolbarBackground(.hidden, for: .tabBar)
         
         .safeAreaInset(edge: .bottom) {
             HStack {
                 Button("Уточнить время") {
                     showFilters = true
                 }
-                .font(.system(size: Constants.bottomButtonFontSize, weight: .bold))
-                .frame(maxWidth: .infinity, minHeight: Constants.bottomButtonHeight)
+                .font(.system(size: Constants.FontSize.bottomButton, weight: .bold))
+                .frame(maxWidth: .infinity, minHeight: Constants.Size.bottomButtonHeight)
                 .background(Color.ypBlue)
                 .foregroundColor(.ypWhiteUniversal)
-                .cornerRadius(Constants.bottomButtonCorner)
+                .cornerRadius(Constants.Corner.bottomButton)
             }
-            .padding(.horizontal, Constants.horizontalPadding)
-            .padding(.bottom, Constants.bottomPadding)
+            .padding(.horizontal, Constants.Spacing.horizontal)
+            .padding(.bottom, Constants.Spacing.bottom)
             .background(Color(.systemBackground))
         }
         .navigationDestination(isPresented: $showFilters) {
@@ -101,24 +114,25 @@ struct CarrierListView: View {
             CarrierTableRow(viewModel: item)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
-                .listRowInsets(.init(top: Constants.rowVerticalInset,
-                                     leading: Constants.rowHorizontalInset,
-                                     bottom: Constants.rowVerticalInset,
-                                     trailing: Constants.rowHorizontalInset))
+                .listRowInsets(.init(top: Constants.Spacing.rowVerticalInset,
+                                     leading: Constants.Spacing.rowHorizontalInset,
+                                     bottom: Constants.Spacing.rowVerticalInset,
+                                     trailing: Constants.Spacing.rowHorizontalInset))
         }
         .listStyle(.plain)
         .scrollIndicators(.hidden)
         .scrollContentBackground(.hidden)
-        
-        .contentMargins(.bottom, Constants.listBottomPadding,
+        .listSectionSeparator(.hidden, edges: .all)
+        .listRowSeparator(.hidden, edges: .all)
+        .contentMargins(.bottom, Constants.Spacing.listBottom,
                         for: .scrollContent)
     }
     
     private func load() {
         isLoading = true
         loadWithGlobalError(app: app,
-                            delay: Constants.retryDelay,
-                            maxRetries: Constants.maxRetries,
+                            delay: Constants.Retry.delay,
+                            maxRetries: Constants.Retry.maxRetries,
                             task: { try await fetchCarriers()},
                             onSuccess: { data in
             loadedItems = data
@@ -128,7 +142,7 @@ struct CarrierListView: View {
     }
     
     private func fetchCarriers() async throws -> [CarrierRowViewModel] {
-        try await Task.sleep(nanoseconds: Constants.mockDelayNs)
+        try await Task.sleep(nanoseconds: Constants.Mock.delayNs)
         return items
     }
 }
