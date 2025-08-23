@@ -8,27 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject private var app: AppState
+    @Environment(\.colorScheme) private var colorScheme
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-        .onAppear {
-                TestAPI.testFetchStations()
-                TestAPI.testFetchCarrier()
-                TestAPI.testFetchCopyright()
-                TestAPI.testFetchNearestSettlement()
-                TestAPI.testFetchSearch()
-                TestAPI.testFetchStationSchedule()
-                TestAPI.testFetchStationsList()
-                TestAPI.testFetchThread()
-        }
+        MainTabView()
+            .edgesIgnoringSafeArea(.bottom)
     }
 }
 
-#Preview {
-    ContentView()
-}
+#Preview { ContentView().environmentObject(AppState()) }
