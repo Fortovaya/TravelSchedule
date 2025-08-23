@@ -31,6 +31,7 @@ struct MainTabView: View {
     @State private var activePair: StoryPair? = nil
     @State private var startIndex  = 0
     @State private var seen: Set<Int> = []
+    @State private var stripHeight: CGFloat = 0
     
     private var isTabBarHidden: Bool {
         if let last = path.last, case .carriers = last { return true }
@@ -57,6 +58,7 @@ struct MainTabView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView {
+                
                 NavigationStack(path: $path) {
                     RouteInputSectionView(
                         actionButton: {},
@@ -64,25 +66,29 @@ struct MainTabView: View {
                             path.append(.carriers(from: from, to: to))
                         }
                     )
-                    .navigationDestination(for: Route.self) { route in
-                        switch route {
-                            case let .carriers(from, to):
-                                if let search = try? APIFactory.makeSearchService(),
-                                   let carrier = try? APIFactory.makeCarrierService() {
-                                    CarrierListView(headerFrom: from,
-                                                    headerTo: to,
-                                                    searchService: search,
-                                                    carrierService: carrier
-                                    )
-                                } else {
-                                    ErrorStateView(state: .server)
-                                        .task { app.showError(.server) }
-                                }
-                        }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .padding(.top, stripHeight + 44)
+                }
+                .navigationDestination(for: Route.self) { route in
+                    switch route {
+                        case let .carriers(from, to):
+                            if let search = try? APIFactory.makeSearchService(),
+                               let carrier = try? APIFactory.makeCarrierService() {
+                                CarrierListView(headerFrom: from,
+                                                headerTo: to,
+                                                searchService: search,
+                                                carrierService: carrier
+                                )
+                            } else {
+                                ErrorStateView(state: .server)
+                                    .task { app.showError(.server) }
+                            }
                     }
                 }
+                
                 .toolbar(.hidden, for: .navigationBar)
-                .safeAreaInset(edge: .top) {
+                
+                .safeAreaInset(edge: .top,spacing: 0) {
                     if path.isEmpty {
                         StoriesStripView(stories: Story.odd, seenIndices: seen) { index in
                             guard index < Story.pairs.count else { return }
@@ -90,6 +96,14 @@ struct MainTabView: View {
                             activePair = StoryPair(stories: Story.pairs[index])
                             startIndex = 0
                         }
+                        .background(
+                            GeometryReader { geo in
+                                Color.clear
+                                    .onChange(of: geo.size.height, initial: true) { _, new in
+                                        stripHeight = new
+                                    }
+                            }
+                        )
                         .background(Color(.systemBackground))
                     }
                 }
