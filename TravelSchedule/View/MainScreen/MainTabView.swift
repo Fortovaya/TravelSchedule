@@ -13,6 +13,11 @@ enum Route: Hashable {
 
 struct MainTabView: View {
     
+    struct StoryPair: Identifiable {
+        let id = UUID()
+        let stories: [Story]
+    }
+    
     private enum Constants {
         static let tabIconSize: CGFloat = 30
         static let firstTabSystemImage = "arrow.up.message.fill"
@@ -21,10 +26,11 @@ struct MainTabView: View {
     
     @EnvironmentObject private var app: AppState
     @Environment(\.colorScheme) private var colorScheme
-    @State private var path: [Route] = []
     
-    @State private var showStories = false
+    @State private var path: [Route] = []
+    @State private var activePair: StoryPair? = nil
     @State private var startIndex  = 0
+    @State private var seen: Set<Int> = []
     
     private var isTabBarHidden: Bool {
         if let last = path.last, case .carriers = last { return true }
@@ -78,15 +84,17 @@ struct MainTabView: View {
                 .toolbar(.hidden, for: .navigationBar)
                 .safeAreaInset(edge: .top) {
                     if path.isEmpty {
-                        StoriesStripView(stories: Story.all) { index in
-                            startIndex = index
-                            showStories = true
+                        StoriesStripView(stories: Story.odd, seenIndices: seen) { index in
+                            guard index < Story.pairs.count else { return }
+                            seen.insert(index)
+                            activePair = StoryPair(stories: Story.pairs[index])
+                            startIndex = 0
                         }
                         .background(Color(.systemBackground))
                     }
                 }
-                .fullScreenCover(isPresented: $showStories) {
-                    StoryView(stories: Story.all, initialIndex: startIndex)
+                .fullScreenCover(item: $activePair) { pair in
+                    StoryView(stories: pair.stories, initialIndex: startIndex)
                 }
                 .tabItem {
                     Image(systemName: Constants.firstTabSystemImage)

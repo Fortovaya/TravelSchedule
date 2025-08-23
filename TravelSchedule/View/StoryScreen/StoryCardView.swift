@@ -9,8 +9,15 @@ import SwiftUI
 
 struct StoryCardView: View {
     let story: Story
+    let isSeen: Bool
+    
     private let size = CGSize(width: 92, height: 140)
     private let corner: CGFloat = 16
+    
+    init(story: Story, isSeen: Bool = false) {
+        self.story = story
+        self.isSeen = isSeen
+    }
     
     var body: some View {
         ZStack(alignment: .bottomLeading) {
@@ -20,9 +27,11 @@ struct StoryCardView: View {
                     .scaledToFill()
                     .frame(width: size.width, height: size.height)
                     .clipped()
+                    .opacity(isSeen ? 0.5 : 1.0)
             } else {
                 story.backgroundColor
                     .frame(width: size.width, height: size.height)
+                    .opacity(isSeen ? 0.5 : 1.0)
             }
             
             Text(story.title)
@@ -33,28 +42,42 @@ struct StoryCardView: View {
         }
         .frame(width: size.width, height: size.height)
         .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: corner, style: .continuous)
+                .strokeBorder(isSeen ? .clear : .ypBlue, lineWidth: 4)
+        )
     }
 }
 
-#Preview("CardLight", traits: .sizeThatFitsLayout) {
-    StoryCardView(story: .storyOne)
+#Preview("Card • Unseen (blue border)", traits: .sizeThatFitsLayout) {
+    StoryCardView(story: .storyOne, isSeen: false)
         .padding()
 }
 
-#Preview("CardDark", traits: .sizeThatFitsLayout) {
-    StoryCardView(story: .storyOne)
+#Preview("Card • Seen (50% opacity)", traits: .sizeThatFitsLayout) {
+    StoryCardView(story: .storyOne, isSeen: true)
         .padding()
         .background(Color.black)
         .preferredColorScheme(.dark)
 }
 
-#Preview("Strip (horizontal)", traits: .fixedLayout(width: 390, height: 200)) {
+#Preview("Side-by-side", traits: .sizeThatFitsLayout) {
+    HStack(spacing: 16) {
+        StoryCardView(story: .storyOne, isSeen: false)
+        StoryCardView(story: .storyOne, isSeen: true)
+    }
+    .padding()
+}
+
+#Preview("Strip • Mixed", traits: .fixedLayout(width: 390, height: 200)) {
     ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 12) {
-            ForEach(Array(Story.all.prefix(5)).indices, id: \.self) { i in
-                StoryCardView(story: Story.all[i])
+            let items = Array(Story.all.prefix(8))
+            ForEach(items.indices, id: \.self) { i in
+                StoryCardView(story: items[i], isSeen: i.isMultiple(of: 2))
             }
         }
-        .padding()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 }

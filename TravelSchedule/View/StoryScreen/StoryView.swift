@@ -24,10 +24,20 @@ struct StoryView: View {
         }
     }
     
+    @Environment(\.dismiss) private var dismiss
+    
+    private var currentStoryIndex: Int {
+        guard !stories.isEmpty else { return 0 }
+        let raw = floor(progress * CGFloat(stories.count))
+        let i = Int(raw)
+        return max(0, min(i, stories.count - 1))
+    }
+    private var currentStory: Story {
+        stories.isEmpty ? Story.all.first! : stories[currentStoryIndex]
+    }
+    
     private let stories: [Story]
     private let configuration: Configuration
-    private var currentStory: Story { stories[currentStoryIndex] }
-    private var currentStoryIndex: Int { Int(progress * CGFloat(stories.count)) }
     @State private var progress: CGFloat = 0
     @State private var timer: Timer.TimerPublisher
     @State private var cancellable: Cancellable?
@@ -46,14 +56,17 @@ struct StoryView: View {
         
         ZStack(alignment: .topTrailing) {
             Color(.systemBackground).ignoresSafeArea()
-            StoriesContentView(story: currentStory)
+            if !stories.isEmpty {
+                StoriesContentView(story: currentStory)
+            }
             ProgressBar(numberOfSections: stories.count, progress: progress)
                 .padding(.init(top: 28, leading: 12, bottom: 12, trailing: 12))
-            CloseButton(action: { print("Close Story") })
+            CloseButton(action: { dismiss() })
                 .padding(.top, 57)
                 .padding(.trailing, 12)
         }
         .onAppear {
+            guard stories.count > 1 else { return }
             timer = Self.createTimer(configuration: configuration)
             cancellable = timer.connect()
         }
@@ -94,12 +107,10 @@ struct StoryView: View {
         cancellable = timer.connect()
     }
     
-    
     private static func createTimer(configuration: Configuration) -> Timer.TimerPublisher {
         Timer.publish(every: configuration.timerTickInternal, on: .main, in: .common)
     }
 }
-
 
 #Preview {
     StoryView()

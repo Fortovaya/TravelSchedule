@@ -147,4 +147,12 @@ extension Story {
         .storyEleven, .storyTwelve, .storyThirteen, .storyFourteen, .storyFifteen,
         .storySixteen, .storySeventeen, .storyEighteen
     ]
+    
+    static var odd: [Story] {
+        stride(from: 0, to: all.count, by: 2).map { all[$0] }
+    }
+    
+    static var pairs: [[Story]] {
+        stride(from: 0, to: all.count - 1, by: 2).map { [all[$0], all[$0 + 1]] }
+    }
 }
