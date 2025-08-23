@@ -23,6 +23,9 @@ struct MainTabView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var path: [Route] = []
     
+    @State private var showStories = false
+    @State private var startIndex  = 0
+    
     private var isTabBarHidden: Bool {
         if let last = path.last, case .carriers = last { return true }
         return false
@@ -48,7 +51,6 @@ struct MainTabView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView {
-                
                 NavigationStack(path: $path) {
                     RouteInputSectionView(
                         actionButton: {},
@@ -72,6 +74,19 @@ struct MainTabView: View {
                                 }
                         }
                     }
+                }
+                .toolbar(.hidden, for: .navigationBar)
+                .safeAreaInset(edge: .top) {
+                    if path.isEmpty {
+                        StoriesStripView(stories: Story.all) { index in
+                            startIndex = index
+                            showStories = true
+                        }
+                        .background(Color(.systemBackground))
+                    }
+                }
+                .fullScreenCover(isPresented: $showStories) {
+                    StoryView(stories: Story.all, initialIndex: startIndex)
                 }
                 .tabItem {
                     Image(systemName: Constants.firstTabSystemImage)
