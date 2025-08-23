@@ -32,14 +32,18 @@ struct StoryView: View {
     @State private var timer: Timer.TimerPublisher
     @State private var cancellable: Cancellable?
     
-    init(stories: [Story] = Story.all) {
+    init(stories: [Story] = Story.all, initialIndex: Int = 0) {
         self.stories = stories
         configuration = Configuration(storiesCount: stories.count)
         timer = Self.createTimer(configuration: configuration)
+        
+        let count = max(stories.count, 1)
+        let start = max(0, min(initialIndex, count - 1))
+        _progress = State(initialValue: CGFloat(start) / CGFloat(count))
     }
     
     var body: some View {
-    
+        
         ZStack(alignment: .topTrailing) {
             Color(.systemBackground).ignoresSafeArea()
             StoriesContentView(story: currentStory)
@@ -90,7 +94,7 @@ struct StoryView: View {
         cancellable = timer.connect()
     }
     
-
+    
     private static func createTimer(configuration: Configuration) -> Timer.TimerPublisher {
         Timer.publish(every: configuration.timerTickInternal, on: .main, in: .common)
     }
