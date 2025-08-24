@@ -39,18 +39,21 @@ struct ScheduleFilterView: View {
         }
         .safeAreaInset(edge: .bottom) {
             if isApplyEnabled {
-                HStack {
-                    Button("Применить") {
-                        
-                    }
-                    .font(.system(size: 17, weight: .bold))
-                    .frame(maxWidth: .infinity, minHeight: 56)
-                    .background(Color.ypBlue)
-                    .foregroundColor(.ypWhiteUniversal)
-                    .cornerRadius(16)
+                Button {
+                    onApply?(selectedParts, transfers)
+                } label: {
+                    Text("Применить")
+                        .font(.bold17)
+                        .frame(maxWidth: .infinity, minHeight: 56)
+                        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
+                .buttonStyle(.plain)
+                .foregroundColor(.ypWhiteUniversal)
+                .background(Color.ypBlue)
+                .cornerRadius(16)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
+                .background(Color(.systemBackground))
             }
         }
     }

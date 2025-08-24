@@ -41,3 +41,15 @@ extension CarrierRowViewModel {
               durationText: "9 часов", note: nil)
     ]
 }
+
+extension CarrierRowViewModel {
+    var departureHour: Int? {
+        let comps = departTime.split(separator: ":")
+        guard let h = comps.first, let hour = Int(h) else { return nil }
+        return hour
+    }
+    
+    var hasTransfers: Bool {
+        note?.localizedCaseInsensitiveContains("пересад") ?? false
+    }
+}
