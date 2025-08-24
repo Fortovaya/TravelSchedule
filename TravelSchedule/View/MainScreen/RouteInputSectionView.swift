@@ -86,7 +86,12 @@ struct RouteInputSectionView: View {
             .frame(height: Constants.Size.viewHeight)
             .padding(.horizontal, Constants.Padding.horizontal)
             
-            if hasBothInputs { searchButton.transition(.opacity.combined(with: .scale)) }
+            searchButton
+                .opacity(hasBothInputs ? 1 : 0)
+                .scaleEffect(hasBothInputs ? 1 : 0.98)
+                .disabled(!hasBothInputs)
+                .allowsHitTesting(hasBothInputs)
+                .animation(.easeInOut(duration: Constants.Animation.duration), value: hasBothInputs)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.top, 184)
@@ -167,7 +172,7 @@ struct RouteInputSectionView: View {
         } label:{
             Text(Constants.Titles.searchButton)
                 .font(.system(size: Constants.FontSize.labelButton, weight: .bold))
-                .foregroundColor(.ypWhiteUniversal)
+                .foregroundColor(Constants.Colors.cardBackground)
                 .frame(width: Constants.Size.searchButtonWidth, height: Constants.Size.searchButtonHeight)
                 .background(Constants.Colors.searchButtonBackground)
                 .cornerRadius(Constants.CornerRadius.searchButton)
