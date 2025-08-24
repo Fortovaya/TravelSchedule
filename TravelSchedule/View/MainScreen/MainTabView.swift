@@ -28,7 +28,7 @@ struct MainTabView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     @State private var path: [Route] = []
-    @State private var activePair: StoryPair? = nil
+    @State private var activePair: StoryPair?
     @State private var startIndex  = 0
     @State private var seen: Set<Int> = []
     

@@ -20,16 +20,16 @@ struct CarrierInfoView: View {
     
     private enum Constants {
         enum Size {
-            static let logoCardHeight: CGFloat = 104;
+            static let logoCardHeight: CGFloat = 104
             static let logoCorner: CGFloat = 24
         }
         enum Spacing {
-            static let vstack: CGFloat = 16;
-            static let contentPadding: CGFloat = 16;
+            static let vstack: CGFloat = 16
+            static let contentPadding: CGFloat = 16
             static let fieldSpacing: CGFloat = 4
         }
         enum FontSize {
-            static let title: CGFloat = 22;
+            static let title: CGFloat = 22
             static let fieldTitle: CGFloat = 13
         }
     }
