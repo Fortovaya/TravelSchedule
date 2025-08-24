@@ -34,10 +34,19 @@ struct FilterResultView: View {
                     Spacer()
                 } else {
                     List(items) { item in
-                        CarrierTableRow(viewModel: item)
+                        NavigationLink {
+                            CarrierInfoView(
+                                code: item.carrierCode,
+                                service: CarrierServiceMock(),
+                                logoAssetName: item.logoSystemName
+                            )
+                        } label: {
+                            CarrierTableRow(viewModel: item)
+                        }
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                             .listRowInsets(.init(top: 8, leading: 16, bottom: 8, trailing: 16))
+                            .buttonStyle(.plain)
                     }
                     .listStyle(.plain)
                     .scrollIndicators(.hidden)
