@@ -30,7 +30,7 @@ struct SettingsView: View {
                         Toggle("", isOn: $isDarkThemeEnabled)
                             .labelsHidden()
                             .tint(onColor)
-                            .onChange(of: isDarkThemeEnabled) { oldValue, newValue in
+                            .onChange(of: isDarkThemeEnabled) { _, _ in
                                 didBootstrapTheme = true
                             }
                     }
@@ -64,7 +64,7 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(isPresented: $showUserAgreement) {
-                UserAgreementView()
+                UserAgreementWebScreen()
             }
             
             .safeAreaInset(edge: .bottom) {
