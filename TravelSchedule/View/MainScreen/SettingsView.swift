@@ -9,13 +9,16 @@ import SwiftUI
 
 struct SettingsView: View {
     
-    @AppStorage("isDarkThemeEnabled") private var isDarkThemeEnabled = false
-    @AppStorage("didBootstrapTheme") private var didBootstrapTheme = true
+    @AppStorage(AppStorageKeys.isDarkThemeEnabled) private var isDarkThemeEnabled = false
+    @AppStorage(AppStorageKeys.didBootstrapTheme) private var didBootstrapTheme = true
+    
     @State private var showUserAgreement = false
     
-    var onColor: Color = .ypBlue
-    var offColor: Color = .ypGray.opacity(0.3)
-    var thumbColor: Color = .white
+    private enum Theme {
+        static let onColor: Color   = .ypBlue
+        static let offColor: Color  = .ypGray.opacity(0.3)
+        static let thumbColor: Color = .white
+    }
     
     var body: some View {
         NavigationStack {
@@ -29,7 +32,7 @@ struct SettingsView: View {
                         Spacer()
                         Toggle("", isOn: $isDarkThemeEnabled)
                             .labelsHidden()
-                            .tint(onColor)
+                            .tint(Theme.onColor)
                             .onChange(of: isDarkThemeEnabled) { _, _ in
                                 didBootstrapTheme = true
                             }
