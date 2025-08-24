@@ -34,11 +34,12 @@ struct ScheduleFilterView: View {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
+                        .foregroundColor(.ypBlack)
                 }
             }
         }
         .safeAreaInset(edge: .bottom) {
-            if isApplyEnabled {
+            VStack(spacing: 0) {
                 Button {
                     onApply?(selectedParts, transfers)
                 } label: {
@@ -51,10 +52,14 @@ struct ScheduleFilterView: View {
                 .foregroundColor(.ypWhiteUniversal)
                 .background(Color.ypBlue)
                 .cornerRadius(16)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 24)
-                .background(Color(.systemBackground))
+                .opacity(isApplyEnabled ? 1 : 0)
+                .disabled(!isApplyEnabled)
+                .allowsHitTesting(isApplyEnabled)
+                .animation(.easeInOut(duration: 0.2), value: isApplyEnabled)
             }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
+            .background(Color(.systemBackground))
         }
     }
 }
