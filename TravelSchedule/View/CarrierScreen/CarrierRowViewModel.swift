@@ -8,7 +8,7 @@
 import SwiftUI
 
 // MARK: - ViewModel
-struct CarrierRowViewModel: Identifiable {
+struct CarrierRowViewModel: Identifiable, Hashable {
     let id = UUID()
     let carrierName: String
     let logoSystemName: String?
@@ -18,6 +18,9 @@ struct CarrierRowViewModel: Identifiable {
     let durationText: String
     let note: String?
     let carrierCode: String
+    
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 extension CarrierRowViewModel {
