@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     
     @AppStorage("isDarkThemeEnabled") private var isDarkThemeEnabled = false
+    @AppStorage("didBootstrapTheme") private var didBootstrapTheme = true
     @State private var showUserAgreement = false
     
     var onColor: Color = .ypBlue
@@ -29,6 +30,9 @@ struct SettingsView: View {
                         Toggle("", isOn: $isDarkThemeEnabled)
                             .labelsHidden()
                             .tint(onColor)
+                            .onChange(of: isDarkThemeEnabled) { oldValue, newValue in
+                                didBootstrapTheme = true
+                            }
                     }
                     .listRowInsets(.init(top: 19, leading: 16, bottom: 19, trailing: 16))
                     .listRowBackground(Color.clear)
