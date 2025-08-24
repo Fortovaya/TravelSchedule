@@ -38,7 +38,7 @@ struct FilterResultView: View {
                             CarrierInfoView(
                                 code: item.carrierCode,
                                 service: CarrierServiceMock(),
-                                logoAssetName: item.logoSystemName
+                                logoAssetName: nil /// тянем logo по API
                             )
                         } label: {
                             CarrierTableRow(viewModel: item)
