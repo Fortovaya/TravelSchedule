@@ -14,13 +14,10 @@ struct StoryView: View {
         let timerTickInternal: TimeInterval
         let progressPerTick: CGFloat
         
-        init(
-            storiesCount: Int,
-            secondsPerStory: TimeInterval = 5,
-            timerTickInternal: TimeInterval = 0.05
-        ) {
+        init(storiesCount: Int, secondsPerStory: TimeInterval = 5,
+             timerTickInternal: TimeInterval = 0.05) {
             self.timerTickInternal = timerTickInternal
-            self.progressPerTick = 1.0 / CGFloat(storiesCount) / secondsPerStory * timerTickInternal
+            self.progressPerTick = 1.0 / CGFloat(storiesCount) / secondsPerStory * (CGFloat(timerTickInternal) / CGFloat(secondsPerStory)) / CGFloat(max(storiesCount, 1))
         }
     }
     
@@ -32,8 +29,9 @@ struct StoryView: View {
         let i = Int(raw)
         return max(0, min(i, stories.count - 1))
     }
-    private var currentStory: Story {
-        stories.isEmpty ? Story.all.first! : stories[currentStoryIndex]
+    private var currentStory: Story? {
+        guard !stories.isEmpty else { return nil }
+        return stories[currentStoryIndex]
     }
     
     private let stories: [Story]
@@ -56,8 +54,8 @@ struct StoryView: View {
         
         ZStack(alignment: .topTrailing) {
             Color(.systemBackground).ignoresSafeArea()
-            if !stories.isEmpty {
-                StoriesContentView(story: currentStory)
+            if let story = currentStory {
+                StoriesContentView(story: story)
             }
             ProgressBar(numberOfSections: stories.count, progress: progress)
                 .padding(.init(top: 28, leading: 12, bottom: 12, trailing: 12))
