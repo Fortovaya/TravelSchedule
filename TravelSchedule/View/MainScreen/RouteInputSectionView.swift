@@ -88,6 +88,8 @@ struct RouteInputSectionView: View {
             
             if hasBothInputs { searchButton.transition(.opacity.combined(with: .scale)) }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.top, 184)
         .animation(.easeInOut(duration: Constants.Animation.duration), value: hasBothInputs)
         .fullScreenCover(isPresented: $isShowingFromSearch) {
             CitySearchView { city in
