@@ -46,7 +46,7 @@ extension Components.Schemas.CarrierResponse {
                 phone: "444 08 49",
                 address: "Bakırköy/ İstanbul",
                 logo: "https://yastat.net/s3/rasp/media/data/company/logo/thy_kopya.jpg",
-                email: "",
+                email: "i.lozgkina@yandex.ru",
                 codes: .init(
                     icao: "THY",
                     sirena: nil,
