@@ -127,7 +127,7 @@ enum TestAPI {
     static func testFetchStationsList(){
         Task {
             do {
-                let service = StationsListService(
+                let service = await StationsListService(
                     client: try client,
                     apikey: apiKey
                 )
@@ -181,6 +181,7 @@ enum TestAPI {
 }
 
 enum APIFactory {
+    
     static func makeSearchService() throws -> SearchServiceProtocol {
         try SearchService(client: TestAPI.client, apikey: TestAPI.apiKey)
     }
@@ -188,4 +189,20 @@ enum APIFactory {
     static func makeCarrierService() throws -> CarrierServiceProtocol {
         try CarrierService(client: TestAPI.client, apikey: TestAPI.apiKey)
     }
+    
+    @MainActor
+    static func makeCityService() throws -> CityServiceProtocol {
+        try CityService(client: TestAPI.client, apikey: TestAPI.apiKey)
+    }
+    
+    @MainActor
+    static func makeStationService() throws -> StationServiceProtocol {
+        let stationsListService = StationsListService(
+            client: try TestAPI.client,
+            apikey: TestAPI.apiKey
+        )
+        return StationService(stationsListService: stationsListService)
+    }
 }
+
+

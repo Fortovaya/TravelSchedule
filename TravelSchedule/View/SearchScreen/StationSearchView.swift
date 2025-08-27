@@ -39,26 +39,48 @@ struct StationSearchView: View {
             static let clearIcon = "xmark.circle.fill"
             static let textTrailingInsetForClear: CGFloat = 34
         }
+        enum Paging {
+            static let pageSize = 12
+            static let prefetchThreshold = 5
+        }
+        static let minSearchCharacters = 2
     }
     
     let city: String
     let onSelect: (String) -> Void
     
+    @EnvironmentObject private var app: AppState
+    
     // MARK: - State
     @State private var searchText: String = ""
-    
-    // MARK: - Data (пока мок)
-    private let stations = [
-        "Киевский вокзал", "Курский вокзал", "Ярославский вокзал",
-        "Белорусский вокзал", "Савеловский вокзал", "Ленинградский вокзал"
-    ]
+    @State private var allStations: [String] = []
+    @State private var isLoading = false
+    @State private var currentLoadedCount: Int = Constants.Paging.pageSize
     
     private var filteredStations: [String] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return q.isEmpty ? stations : stations.filter { $0.localizedCaseInsensitiveContains(q) }
+        if q.isEmpty {
+            return allStations
+        } else {
+            return allStations.filter { $0.localizedCaseInsensitiveContains(q) }
+        }
     }
     
+    private var visibleStations: [String] {
+        let limit = min(currentLoadedCount, filteredStations.count)
+        return Array(filteredStations.prefix(limit))
+    }
+    
+    
     @Environment(\.dismiss) private var dismiss
+    
+    private let stationService: StationServiceProtocol
+    
+    init(stationService: StationServiceProtocol, city: String, onSelect: @escaping (String) -> Void) {
+        self.stationService = stationService
+        self.city = city
+        self.onSelect = onSelect
+    }
     
     // MARK: - Body
     var body: some View {
@@ -66,12 +88,22 @@ struct StationSearchView: View {
             VStack(spacing: 0) {
                 searchField
                 
-                if filteredStations.isEmpty { notFoundView } else { stationList }
+                if filteredStations.isEmpty {
+                    notFoundView
+                } else {
+                    stationList
+                }
             }
             .navigationTitle("Выбор станции")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(false)
             .toolbarRole(.editor)
+            .task {
+                await loadStations()
+            }
+            .onChange(of: searchText) {
+                currentLoadedCount = min(Constants.Paging.pageSize, filteredStations.count)
+            }
         }
         .tint(.ypBlack)
     }
@@ -113,14 +145,112 @@ struct StationSearchView: View {
             Spacer()
         }
     }
+    
+    private func loadStations() async {
+        isLoading = true
+        loadWithGlobalError(
+            app: app,
+            task: {
+                let stations = try await stationService.getStations(for: self.city)
+                return stations.compactMap { $0.title }
+            },
+            onSuccess: { stationTitles in
+                self.allStations = stationTitles
+                self.currentLoadedCount = min(Constants.Paging.pageSize, stationTitles.count)
+                self.isLoading = false
+            }
+        )
+    }
+    
+    private func loadMoreIfNeeded(currentItem: String) {
+        guard !filteredStations.isEmpty else { return }
+        guard currentLoadedCount < filteredStations.count else { return }
+        
+        if let index = visibleStations.firstIndex(of: currentItem),
+           index >= visibleStations.count - Constants.Paging.prefetchThreshold {
+            currentLoadedCount = min(
+                currentLoadedCount + Constants.Paging.pageSize,
+                filteredStations.count
+            )
+        }
+    }
 }
 
-#Preview {
+#Preview("Москва - основные станции") {
     NavigationStack {
-        StationSearchView(city: "Москва") { station in
+        StationSearchView(
+            stationService: MockStationService(),
+            city: "Москва"
+        ) { station in
             print("Выбрана станция: \(station)")
         }
     }
+    .environmentObject(AppState())
+}
+
+#Preview("Санкт-Петербург - основные станции") {
+    NavigationStack {
+        StationSearchView(
+            stationService: MockStationService(),
+            city: "Санкт-Петербург"
+        ) { station in
+            print("Выбрана станция: \(station)")
+        }
+    }
+    .environmentObject(AppState())
+}
+
+#Preview("Пустой список станций") {
+    struct EmptyStationService: StationServiceProtocol {
+        func getStations(for city: String) async throws -> [Station] {
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+            return []
+        }
+    }
+    
+    return NavigationStack {
+        StationSearchView(
+            stationService: EmptyStationService(),
+            city: "Неизвестный город"
+        ) { station in
+            print("Выбрана станция: \(station)")
+        }
+    }
+    .environmentObject(AppState())
+}
+
+#Preview("StationSearchView + Загрузка") {
+    struct SlowStationService: StationServiceProtocol {
+        func getStations(for city: String) async throws -> [Station] {
+            try await Task.sleep(nanoseconds: 3_000_000_000)
+            return [
+                Station(title: "Тестовая станция 1", codes: nil),
+                Station(title: "Тестовая станция 2", codes: nil)
+            ]
+        }
+    }
+    
+    return NavigationStack {
+        StationSearchView(
+            stationService: SlowStationService(),
+            city: "Тестовый город"
+        ) { station in
+            print("Выбрана станция: \(station)")
+        }
+    }
+    .environmentObject(AppState())
+}
+
+#Preview("StationSearchView + Поиск") {
+    NavigationStack {
+        StationSearchView(
+            stationService: MockStationService(),
+            city: "Москва"
+        ) { station in
+            print("Выбрана станция: \(station)")
+        }
+    }
+    .environmentObject(AppState())
 }
 
 #Preview("StationSearchView + Error internet") {
@@ -128,7 +258,10 @@ struct StationSearchView: View {
         @StateObject var app = AppState()
         var body: some View {
             NavigationStack {
-                StationSearchView(city: "Москва") { _ in }
+                StationSearchView(
+                    stationService: MockStationService(),
+                    city: "Москва"
+                ) { _ in }
             }
             .environmentObject(app)
             .withGlobalErrors(app)
@@ -143,7 +276,10 @@ struct StationSearchView: View {
         @StateObject var app = AppState()
         var body: some View {
             NavigationStack {
-                StationSearchView(city: "Москва") { _ in }
+                StationSearchView(
+                    stationService: MockStationService(),
+                    city: "Москва"
+                ) { _ in }
             }
             .environmentObject(app)
             .withGlobalErrors(app)

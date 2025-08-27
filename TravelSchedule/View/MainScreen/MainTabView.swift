@@ -58,27 +58,33 @@ struct MainTabView: View {
         ZStack(alignment: .bottom) {
             TabView {
                 NavigationStack(path: $path) {
-                    RouteInputSectionView(
-                        actionButton: {},
-                        actionSearchButton: { from, to in
-                            path.append(.carriers(from: from, to: to))
+                    if let cityService = try? APIFactory.makeCityService() {
+                        RouteInputSectionView(
+                            cityService: cityService,
+                            actionButton: {},
+                            actionSearchButton: { from, to in
+                                path.append(.carriers(from: from, to: to))
+                            }
+                        )
+                        .navigationDestination(for: Route.self) { route in
+                            switch route {
+                                case let .carriers(from, to):
+                                    if let search = try? APIFactory.makeSearchService(),
+                                       let carrier = try? APIFactory.makeCarrierService() {
+                                        CarrierListView(headerFrom: from,
+                                                        headerTo: to,
+                                                        searchService: search,
+                                                        carrierService: carrier
+                                        )
+                                    } else {
+                                        ErrorStateView(state: .server)
+                                            .task { app.showError(.server) }
+                                    }
+                            }
                         }
-                    )
-                    .navigationDestination(for: Route.self) { route in
-                        switch route {
-                            case let .carriers(from, to):
-                                if let search = try? APIFactory.makeSearchService(),
-                                   let carrier = try? APIFactory.makeCarrierService() {
-                                    CarrierListView(headerFrom: from,
-                                                    headerTo: to,
-                                                    searchService: search,
-                                                    carrierService: carrier
-                                    )
-                                } else {
-                                    ErrorStateView(state: .server)
-                                        .task { app.showError(.server) }
-                                }
-                        }
+                    } else {
+                        ErrorStateView(state: .server)
+                            .task { app.showError(.server) }
                     }
                 }
                 .toolbar(.hidden, for: .navigationBar)

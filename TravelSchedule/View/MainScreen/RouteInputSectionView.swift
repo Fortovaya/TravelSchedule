@@ -63,6 +63,7 @@ struct RouteInputSectionView: View {
     @State private var isShowingFromSearch = false
     @State private var isShowingToSearch = false
     @EnvironmentObject private var app: AppState
+    private let cityService: CityServiceProtocol 
     
     let actionButton: () -> Void
     let actionSearchButton: (_ from: String, _ to: String) -> Void
@@ -70,6 +71,16 @@ struct RouteInputSectionView: View {
     private var hasBothInputs: Bool {
         !from.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !to.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    init(
+        cityService: CityServiceProtocol,
+        actionButton: @escaping () -> Void,
+        actionSearchButton: @escaping (_ from: String, _ to: String) -> Void
+    ) {
+        self.cityService = cityService
+        self.actionButton = actionButton
+        self.actionSearchButton = actionSearchButton
     }
     
     var body: some View {
@@ -97,13 +108,13 @@ struct RouteInputSectionView: View {
         .padding(.top, 184)
         .animation(.easeInOut(duration: Constants.Animation.duration), value: hasBothInputs)
         .fullScreenCover(isPresented: $isShowingFromSearch) {
-            CitySearchView { city in
+            CitySearchView(cityService: cityService) { city in
                 from = city
                 isShowingFromSearch = false
             }
         }
         .fullScreenCover(isPresented: $isShowingToSearch) {
-            CitySearchView { city in
+            CitySearchView(cityService: cityService) { city in
                 to = city
                 isShowingToSearch = false
             }
@@ -183,5 +194,7 @@ struct RouteInputSectionView: View {
 }
 
 #Preview {
-    RouteInputSectionView(actionButton: {}, actionSearchButton: {from,to in })
+    RouteInputSectionView(cityService: MockCityService(),
+                          actionButton: {},
+                          actionSearchButton: {from,to in })
 }
