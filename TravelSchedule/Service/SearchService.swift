@@ -10,7 +10,7 @@ import Foundation
 
 typealias SearchResponse = Components.Schemas.Segments
 
-protocol SearchServiceProtocol: Actor {
+protocol SearchServiceProtocol: Actor, Sendable {
     /// список рейсов, следующих от указанной станции отправления к указанной станции прибытия и информацию по каждому рейсу
     func getScheduleBetweenStations(from: String, to: String) async throws -> SearchResponse
 }

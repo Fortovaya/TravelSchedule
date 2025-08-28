@@ -74,9 +74,9 @@ struct StationSearchView: View {
     
     @Environment(\.dismiss) private var dismiss
     
-    private let stationService: StationServiceProtocol
+    private let stationService: any StationServiceProtocol
     
-    init(stationService: StationServiceProtocol, city: String, onSelect: @escaping (String) -> Void) {
+    init(stationService: some StationServiceProtocol, city: String, onSelect: @escaping (String) -> Void) {
         self.stationService = stationService
         self.city = city
         self.onSelect = onSelect

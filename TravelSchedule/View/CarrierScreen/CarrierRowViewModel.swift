@@ -8,7 +8,7 @@
 import SwiftUI
 
 // MARK: - ViewModel
-struct CarrierRowViewModel: Identifiable, Hashable {
+struct CarrierRowViewModel: Identifiable, Hashable, Sendable{
     let id = UUID()
     let carrierName: String
     let logoSystemName: String?

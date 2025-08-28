@@ -93,10 +93,10 @@ struct CitySearchView: View {
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - Services
-    private let cityService: CityServiceProtocol
+    private let cityService: any CityServiceProtocol
     
     // MARK: - Init
-    init(cityService: CityServiceProtocol, onSelect: @escaping (String) -> Void) {
+    init(cityService: some CityServiceProtocol, onSelect: @escaping (String) -> Void) {
         self.cityService = cityService
         self.onSelect = onSelect
     }

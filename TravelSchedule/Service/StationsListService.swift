@@ -10,14 +10,12 @@ import Foundation
 
 typealias AllStationsResponse = Components.Schemas.AllStationsResponse
 
-@MainActor
-protocol StationsListServiceProtocol {
+protocol StationsListServiceProtocol: Actor {
     /// полный список станций, информацию о которых предоставляют Яндекс Расписания
     func getAllStations() async throws -> AllStationsResponse
 }
 
-@MainActor
-final class StationsListService: StationsListServiceProtocol {
+final actor StationsListService: StationsListServiceProtocol {
     
     private let client: Client
     private let apikey: String

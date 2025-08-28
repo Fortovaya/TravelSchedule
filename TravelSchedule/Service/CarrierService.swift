@@ -10,12 +10,12 @@ import Foundation
 
 typealias CarrierResponse = Components.Schemas.CarrierResponse
 
-protocol CarrierServiceProtocol {
+protocol CarrierServiceProtocol: Actor {
     /// информация о перевозчике по указанному коду перевозчика
     func getCarrierInfo(code: String) async throws -> CarrierResponse
 }
 
-final class CarrierService: CarrierServiceProtocol {
+final actor CarrierService: CarrierServiceProtocol {
     
     private let client: Client
     private let apikey: String

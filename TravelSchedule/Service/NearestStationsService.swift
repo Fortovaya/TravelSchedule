@@ -10,12 +10,12 @@ import OpenAPIURLSession
 
 typealias NearestStations = Components.Schemas.Stations
 
-protocol NearestStationsServiceProtocol {
+protocol NearestStationsServiceProtocol: Actor {
     /// Функция для получения станций, асинхронная и может выбросить ошибку
     func getNearestStations(lat: Double, lng: Double, distance: Int) async throws -> NearestStations
 }
 
-final class NearestStationsService: NearestStationsServiceProtocol {
+final actor NearestStationsService: NearestStationsServiceProtocol {
     
     /// Хранит экземпляр сгенерированного клиента
     private let client: Client

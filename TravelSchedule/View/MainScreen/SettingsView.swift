@@ -7,12 +7,13 @@
 
 import SwiftUI
 import Combine
+import Observation
 
 struct SettingsView: View {
     
     @State private var model = SettingsViewModel()
     @State private var cancellables = Set<AnyCancellable>()
-
+    
     private enum Theme {
         static let onColor: Color   = .ypBlue
         static let offColor: Color  = .ypGray.opacity(0.3)
@@ -89,7 +90,9 @@ struct SettingsView: View {
             }
             .onAppear {
                 model.themeDidChange
+                    .receive(on: DispatchQueue.main)
                     .sink { _ in
+                    }
                     .store(in: &cancellables)
             }
         }

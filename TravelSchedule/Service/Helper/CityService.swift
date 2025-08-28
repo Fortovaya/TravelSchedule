@@ -9,13 +9,11 @@ import Foundation
 
 typealias City = Components.Schemas.Settlement
 
-@MainActor
-protocol CityServiceProtocol {
+protocol CityServiceProtocol: Sendable{
     func getAllCities() async throws -> [City]
 }
 
-@MainActor
-final class CityService: CityServiceProtocol {
+final actor CityService: CityServiceProtocol {
     
     private let client: Client
     private let apikey: String

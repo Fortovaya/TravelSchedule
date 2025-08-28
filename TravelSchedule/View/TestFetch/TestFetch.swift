@@ -157,27 +157,6 @@ enum TestAPI {
             }
         }
     }
-    
-    static func testFetchCarrier2() {
-        Task {
-            do {
-                let service = CarrierService(
-                    client: try client,
-                    apikey: apiKey
-                )
-                
-                print("Fetching carriers...")
-                let carriers = try await service.getCarrierInfo(code: "680")
-                print("Successfully fetched carriers")
-                
-                // Вызов твоего метода для просмотра структуры:
-                service.debugCarrierStructure(carriers)
-                
-            } catch {
-                print("Error fetching carriers: \(error)")
-            }
-        }
-    }
 }
 
 enum APIFactory {
