@@ -66,11 +66,16 @@ final class CitySearchViewModel {
     }
     
     func loadCities() async {
+        guard !isLoading else { return }
         isLoading = true
+        
+        let service = self.cityService
+        
         loadWithGlobalError(
             app: app,
-            task: { [self] in
-                let raw = try await cityService.getAllCities()
+            task: {
+                do {
+                let raw = try await service.getAllCities()
                 return raw.compactMap { item in
                     guard
                         let title = item.title,
@@ -78,20 +83,27 @@ final class CitySearchViewModel {
                     else { return nil }
                     return SettlementLite(title: title, code: code)
                 }
+                } catch {
+                    await MainActor.run { [weak self] in self?.isLoading = false }
+                    throw error
+                }
             },
-            onSuccess: { [self] (cities: [SettlementLite]) in
-                var seen = Set<String>()
-                allCities = cities
-                    .filter { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-                    .filter { seen.insert($0.title).inserted }
-                    .sorted {
-                        $0.title.compare($1.title,
-                                         options: .caseInsensitive,
-                                         range: nil,
-                                         locale: Locale(identifier: "ru_RU")) == .orderedAscending
-                    }
-                currentLoadedCount = min(Constants.Paging.pageSize, allCities.count)
-                isLoading = false
+            onSuccess: { [weak self] (cities: [SettlementLite]) in
+                Task { @MainActor in
+                    guard let self else { return }
+                    var seen = Set<String>()
+                    self.allCities = cities
+                        .filter { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                        .filter { seen.insert($0.title).inserted }
+                        .sorted {
+                            $0.title.compare($1.title,
+                                             options: .caseInsensitive,
+                                             range: nil,
+                                             locale: Locale(identifier: "ru_RU")) == .orderedAscending
+                        }
+                    self.currentLoadedCount = min(Constants.Paging.pageSize, self.allCities.count)
+                    self.isLoading = false
+                }
             }
         )
     }

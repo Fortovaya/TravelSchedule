@@ -47,11 +47,16 @@ final class StationSearchViewModel {
     }
     
     func loadStations() async {
+        guard !isLoading else { return }
         isLoading = true
+        
+        let city = self.city
+        let service = self.stationService
+        
         loadWithGlobalError(
             app: app,
-            task: { [self] in
-                let raw = try await stationService.getStations(for: self.city)
+            task: {
+                let raw = try await service.getStations(for: city)
                 return raw.compactMap { s -> StationLite? in
                     guard let title = s.title else { return nil }
                     let code = s.code ?? s.codes?.yandex_code
@@ -60,9 +65,11 @@ final class StationSearchViewModel {
                 }
             },
             onSuccess: { [self] (result: [StationLite]) in
-                self.allStations = result
-                self.currentLoadedCount = min(Constants.Paging.pageSize, result.count)
-                self.isLoading = false
+                Task { @MainActor in
+                    self.allStations = result
+                    self.currentLoadedCount = min(Constants.Paging.pageSize, result.count)
+                    self.isLoading = false
+                }
             }
         )
     }

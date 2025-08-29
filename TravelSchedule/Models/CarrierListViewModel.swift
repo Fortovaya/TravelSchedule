@@ -58,9 +58,10 @@ final class CarrierListViewModel: ObservableObject {
             maxRetries: Constants.Retry.maxRetries,
             task: { try await self.fetchCarriers() },
             onSuccess: { [weak self] data in
-                guard let self else { return }
-                self.loadedItems = data
-                self.isLoading = false
+                Task { @MainActor in
+                    self?.loadedItems = data
+                    self?.isLoading = false
+                }
             }
         )
     }

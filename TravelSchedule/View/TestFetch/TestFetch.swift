@@ -7,9 +7,10 @@
 
 import OpenAPIRuntime
 import OpenAPIURLSession
+import Foundation
 
 enum TestAPI {
-    static let apiKey = "17a7b5d3-ce93-4508-bdd7-5058909c0fbd"
+    static let apiKey = "de28ff95-582d-46dc-8fec-25a141173fda"
     static var client: Client {
         get throws {
             Client(
@@ -127,7 +128,7 @@ enum TestAPI {
     static func testFetchStationsList(){
         Task {
             do {
-                let service = await StationsListService(
+                let service = StationsListService(
                     client: try client,
                     apikey: apiKey
                 )
@@ -156,31 +157,6 @@ enum TestAPI {
                 print("Error fetching thread: \(error)")
             }
         }
-    }
-}
-
-enum APIFactory {
-    
-    static func makeSearchService() throws -> SearchServiceProtocol {
-        try SearchService(client: TestAPI.client, apikey: TestAPI.apiKey)
-    }
-    
-    static func makeCarrierService() throws -> CarrierServiceProtocol {
-        try CarrierService(client: TestAPI.client, apikey: TestAPI.apiKey)
-    }
-    
-    @MainActor
-    static func makeCityService() throws -> CityServiceProtocol {
-        try CityService(client: TestAPI.client, apikey: TestAPI.apiKey)
-    }
-    
-    @MainActor
-    static func makeStationService() throws -> StationServiceProtocol {
-        let stationsListService = StationsListService(
-            client: try TestAPI.client,
-            apikey: TestAPI.apiKey
-        )
-        return StationService(stationsListService: stationsListService)
     }
 }
 
