@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CarrierListView: View {
     
-    private struct FilterResultBox: Identifiable, Hashable {
+    struct FilterResultBox: Identifiable, Hashable, Sendable {
         let id = UUID()
         let items: [CarrierRowViewModel]
         
@@ -43,37 +43,44 @@ struct CarrierListView: View {
         }
     }
     
-    let headerFrom: String
-    let headerTo: String
-    let fromStationCode: String
-    let toStationCode: String
-    
-    let searchService: SearchServiceProtocol
-    let carrierService: CarrierServiceProtocol
-    
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var app: AppState
+    @StateObject private var viewModel: CarrierListViewModel
     
-    @State private var showFilters = false
-    @State private var loadedItems: [CarrierRowViewModel] = []
-    @State private var isLoading = true
-    @State private var filterResultBox: FilterResultBox? = nil
+    init(
+        headerFrom: String,
+        headerTo: String,
+        fromStationCode: String,
+        toStationCode: String,
+        searchService: SearchServiceProtocol,
+        carrierService: CarrierServiceProtocol,
+        app: AppState
+    ) {
+        _viewModel = StateObject(wrappedValue: CarrierListViewModel(
+            headerFrom: headerFrom,
+            headerTo: headerTo,
+            fromStationCode: fromStationCode,
+            toStationCode: toStationCode,
+            searchService: searchService,
+            carrierService: carrierService,
+            app: app
+        ))
+    }
     
     var body: some View {
         ZStack {
             Color(.systemBackground).ignoresSafeArea()
             
             VStack(alignment: .leading, spacing: Constants.Spacing.view) {
-                Text("\(headerFrom) → \(headerTo)")
+                Text("\(viewModel.headerFrom) → \(viewModel.headerTo)")
                     .font(.system(size: Constants.FontSize.title, weight: .bold))
                     .foregroundColor(.ypBlack)
                     .padding(.horizontal, Constants.Spacing.horizontal)
                     .padding(.top, Constants.Spacing.titleTop)
                 
-                if isLoading {
+                if viewModel.isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if loadedItems.isEmpty {
+                } else if viewModel.loadedItems.isEmpty {
                     Text("Рейсы не найдены")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
@@ -95,9 +102,9 @@ struct CarrierListView: View {
         .toolbar(.hidden, for: .tabBar)
         .toolbarBackground(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom) {
-            if !loadedItems.isEmpty {
+            if !viewModel.loadedItems.isEmpty {
                 Button {
-                    showFilters = true
+                    viewModel.showFilters = true
                 } label: {
                     Text("Уточнить время")
                         .font(.system(size: Constants.FontSize.bottomButton, weight: .bold))
@@ -115,28 +122,28 @@ struct CarrierListView: View {
                 .background(Color(.systemBackground))
             }
         }
-        .navigationDestination(isPresented: $showFilters) {
+        .navigationDestination(isPresented: $viewModel.showFilters) {
             ScheduleFilterView { selectedParts, transfers in
-                let filtered = filterItems(
-                    items: loadedItems,
+                let filtered = viewModel.filterItems(
+                    items: viewModel.loadedItems,
                     selectedParts: selectedParts,
                     transfers: transfers
                 )
-                self.filterResultBox = .init(items: filtered)
+                viewModel.filterResultBox = .init(items: filtered)
             }
         }
-        .navigationDestination(item: $filterResultBox) { box in
-            FilterResultView(headerFrom: headerFrom,
-                             headerTo: headerTo,
+        .navigationDestination(item: $viewModel.filterResultBox) { box in
+            FilterResultView(headerFrom: viewModel.headerFrom,
+                             headerTo: viewModel.headerTo,
                              items: box.items
             )
         }
-        .onAppear { load() }
+        .onAppear { viewModel.load() }
     }
     
     @ViewBuilder
     private var listView: some View {
-        List(loadedItems) { item in
+        List(viewModel.loadedItems) { item in
             CarrierTableRow(viewModel: item)
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -152,120 +159,5 @@ struct CarrierListView: View {
         .listRowSeparator(.hidden, edges: .all)
         .contentMargins(.bottom, Constants.Spacing.listBottom,
                         for: .scrollContent)
-    }
-    
-    private func load() {
-        isLoading = true
-        loadWithGlobalError(app: app,
-                            delay: Constants.Retry.delay,
-                            maxRetries: Constants.Retry.maxRetries,
-                            task: { try await fetchCarriers()},
-                            onSuccess: { data in
-            loadedItems = data
-            isLoading = false
-        }
-        )
-    }
-    
-    private func fetchCarriers() async throws -> [CarrierRowViewModel] {
-        let resp = try await searchService.getScheduleBetweenStations(
-            from: fromStationCode, to: toStationCode
-        )
-        guard let segments = resp.segments else { return [] }
-        var items: [CarrierRowViewModel] = []
-        for segment in segments {
-            if segment.has_transfers == true, let details = segment.details, !details.isEmpty {
-                if let compositeViewModel = await createCompositeViewModel(from: segment) {
-                    items.append(compositeViewModel)
-                }
-            } else if let viewModel = await CarrierRowViewModel(from: segment, carrierService: carrierService) {
-                items.append(viewModel)
-            }
-        }
-        return items
-    }
-    
-    private func createCompositeViewModel(from segment: Components.Schemas.Segment) async -> CarrierRowViewModel? {
-        guard let departureString = segment.departure,
-              let arrivalString = segment.arrival,
-              let details = segment.details, !details.isEmpty else {
-            return nil
-        }
-        
-        guard let firstDetail = details.first,
-              let thread = firstDetail.thread else {
-            return nil
-        }
-        
-        let carrierName = thread.carrier?.title ?? "Неизвестный перевозчик"
-        let carrierCode = thread.carrier?.code?.description ?? thread.number ?? "unknown"
-        
-        let (dateText, departTime, arriveTime) = CarrierRowViewModel.formatDates(
-            departure: departureString,
-            arrival: arrivalString
-        )
-        
-        let durationText: String
-        if let durationSeconds = segment.duration {
-            durationText = CarrierRowViewModel.formatDuration(seconds: Int(durationSeconds))
-        } else {
-            durationText = CarrierRowViewModel.calculateDuration(
-                departure: departureString,
-                arrival: arrivalString
-            )
-        }
-
-        let transferCity = segment.transfers?.first?.title ?? "Москва"
-        let note = "С пересадкой в \(transferCity)"
-        
-        let logoURL: URL? = await {
-            if let code = thread.carrier?.code?.description {
-                do {
-                    let carrierInfo = try await carrierService.getCarrierInfo(code: code)
-                    
-                    if let logoString = carrierInfo.carrier?.logo, !logoString.isEmpty, let url = URL(string: logoString) {
-                        return url
-                    }
-                    if let logoSvgString = carrierInfo.carrier?.logo_svg, !logoSvgString.isEmpty, let url = URL(string: logoSvgString) {
-                        return url
-                    }
-                } catch {
-                    print("Ошибка получения информации о перевозчике: \(error)")
-                }
-            }
-            return nil
-        }()
-        
-        let logoSystemName = logoURL == nil ? CarrierRowViewModel.getSystemIconName(for: carrierName) : nil
-        
-        return CarrierRowViewModel(
-            carrierName: carrierName,
-            logoSystemName: logoSystemName,
-            logoURL: logoURL,
-            dateText: dateText,
-            departTime: departTime,
-            arriveTime: arriveTime,
-            durationText: durationText,
-            note: note,
-            carrierCode: carrierCode,
-            hasTransfers: true
-        )
-    }
-    
-    private func filterItems(items: [CarrierRowViewModel], selectedParts: Set<DayPart>, transfers:TransfersOption?) -> [CarrierRowViewModel] {
-        items.filter { viewModel in
-            guard let hour = viewModel.departureHour else { return false }
-            
-            let matchesDayPart = selectedParts.contains { $0.contains(hour: hour) }
-            
-            let matchesTransfers: Bool
-            if let t = transfers {
-                matchesTransfers = (t == .yes && viewModel.hasTransfers) || (t == .no && !viewModel.hasTransfers)
-            } else {
-                matchesTransfers = true
-            }
-            
-            return matchesDayPart && matchesTransfers
-        }
     }
 }

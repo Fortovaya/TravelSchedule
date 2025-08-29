@@ -77,7 +77,8 @@ struct MainTabView: View {
                                             fromStationCode: from.code,
                                             toStationCode: to.code,
                                             searchService: search,
-                                            carrierService: carrier
+                                            carrierService: carrier,
+                                            app: app
                                         )
                                     } else {
                                         ErrorStateView(state: .server)
