@@ -10,7 +10,6 @@ import Foundation
 @MainActor
 class MockCityService: CityServiceProtocol {
     func getAllCities() async throws -> [City] {
-        // Моковые данные для превью - создаем города без кодов
         return [
             City(title: "Москва", codes: nil),
             City(title: "Санкт-Петербург", codes: nil),

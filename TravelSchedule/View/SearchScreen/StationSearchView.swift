@@ -47,36 +47,32 @@ struct StationSearchView: View {
     }
     
     let city: String
-    let onSelect: (String) -> Void
+    let onSelect: (StationLite) -> Void
     
     @EnvironmentObject private var app: AppState
     
     // MARK: - State
     @State private var searchText: String = ""
-    @State private var allStations: [String] = []
+    @State private var allStations: [StationLite] = []
     @State private var isLoading = false
     @State private var currentLoadedCount: Int = Constants.Paging.pageSize
     
-    private var filteredStations: [String] {
+    private var filteredStations: [StationLite] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        if q.isEmpty {
-            return allStations
-        } else {
-            return allStations.filter { $0.localizedCaseInsensitiveContains(q) }
-        }
+        guard !q.isEmpty else { return allStations }
+        return allStations.filter { $0.title.localizedCaseInsensitiveContains(q) }
     }
     
-    private var visibleStations: [String] {
+    private var visibleStations: [StationLite] {
         let limit = min(currentLoadedCount, filteredStations.count)
         return Array(filteredStations.prefix(limit))
     }
-    
     
     @Environment(\.dismiss) private var dismiss
     
     private let stationService: any StationServiceProtocol
     
-    init(stationService: some StationServiceProtocol, city: String, onSelect: @escaping (String) -> Void) {
+    init(stationService: some StationServiceProtocol, city: String, onSelect: @escaping (StationLite) -> Void) {
         self.stationService = stationService
         self.city = city
         self.onSelect = onSelect
@@ -118,7 +114,7 @@ struct StationSearchView: View {
     private var stationList: some View {
         List(filteredStations, id: \.self) { station in
             HStack {
-                Text(station)
+                Text(station.title)
                     .font(.system(size: Constants.FontSize.station, weight: .regular))
                     .foregroundColor(.ypBlack)
                 Spacer()
@@ -151,22 +147,27 @@ struct StationSearchView: View {
         loadWithGlobalError(
             app: app,
             task: {
-                let stations = try await stationService.getStations(for: self.city)
-                return stations.compactMap { $0.title }
+                let raw = try await stationService.getStations(for: self.city)
+                return raw.compactMap { s -> StationLite? in
+                    guard let title = s.title else { return nil }
+                    let code = s.code ?? s.codes?.yandex_code
+                    guard let code else { return nil }
+                    return StationLite(title: title, code: code)
+                }
             },
-            onSuccess: { stationTitles in
-                self.allStations = stationTitles
-                self.currentLoadedCount = min(Constants.Paging.pageSize, stationTitles.count)
+            onSuccess: { (result: [StationLite]) in
+                self.allStations = result
+                self.currentLoadedCount = min(Constants.Paging.pageSize, result.count)
                 self.isLoading = false
             }
         )
     }
     
-    private func loadMoreIfNeeded(currentItem: String) {
+    private func loadMoreIfNeeded(currentItem: StationLite) {
         guard !filteredStations.isEmpty else { return }
         guard currentLoadedCount < filteredStations.count else { return }
         
-        if let index = visibleStations.firstIndex(of: currentItem),
+        if let index = visibleStations.firstIndex(where: { $0.id == currentItem.id }),
            index >= visibleStations.count - Constants.Paging.prefetchThreshold {
             currentLoadedCount = min(
                 currentLoadedCount + Constants.Paging.pageSize,
@@ -174,117 +175,4 @@ struct StationSearchView: View {
             )
         }
     }
-}
-
-#Preview("Москва - основные станции") {
-    NavigationStack {
-        StationSearchView(
-            stationService: MockStationService(),
-            city: "Москва"
-        ) { station in
-            print("Выбрана станция: \(station)")
-        }
-    }
-    .environmentObject(AppState())
-}
-
-#Preview("Санкт-Петербург - основные станции") {
-    NavigationStack {
-        StationSearchView(
-            stationService: MockStationService(),
-            city: "Санкт-Петербург"
-        ) { station in
-            print("Выбрана станция: \(station)")
-        }
-    }
-    .environmentObject(AppState())
-}
-
-#Preview("Пустой список станций") {
-    struct EmptyStationService: StationServiceProtocol {
-        func getStations(for city: String) async throws -> [Station] {
-            try await Task.sleep(nanoseconds: 1_000_000_000)
-            return []
-        }
-    }
-    
-    return NavigationStack {
-        StationSearchView(
-            stationService: EmptyStationService(),
-            city: "Неизвестный город"
-        ) { station in
-            print("Выбрана станция: \(station)")
-        }
-    }
-    .environmentObject(AppState())
-}
-
-#Preview("StationSearchView + Загрузка") {
-    struct SlowStationService: StationServiceProtocol {
-        func getStations(for city: String) async throws -> [Station] {
-            try await Task.sleep(nanoseconds: 3_000_000_000)
-            return [
-                Station(title: "Тестовая станция 1", codes: nil),
-                Station(title: "Тестовая станция 2", codes: nil)
-            ]
-        }
-    }
-    
-    return NavigationStack {
-        StationSearchView(
-            stationService: SlowStationService(),
-            city: "Тестовый город"
-        ) { station in
-            print("Выбрана станция: \(station)")
-        }
-    }
-    .environmentObject(AppState())
-}
-
-#Preview("StationSearchView + Поиск") {
-    NavigationStack {
-        StationSearchView(
-            stationService: MockStationService(),
-            city: "Москва"
-        ) { station in
-            print("Выбрана станция: \(station)")
-        }
-    }
-    .environmentObject(AppState())
-}
-
-#Preview("StationSearchView + Error internet") {
-    struct Harness: View {
-        @StateObject var app = AppState()
-        var body: some View {
-            NavigationStack {
-                StationSearchView(
-                    stationService: MockStationService(),
-                    city: "Москва"
-                ) { _ in }
-            }
-            .environmentObject(app)
-            .withGlobalErrors(app)
-            .onAppear { app.showError(.offline) }
-        }
-    }
-    return Harness()
-}
-
-#Preview("StationSearchView + Error server") {
-    struct Harness: View {
-        @StateObject var app = AppState()
-        var body: some View {
-            NavigationStack {
-                StationSearchView(
-                    stationService: MockStationService(),
-                    city: "Москва"
-                ) { _ in }
-            }
-            .environmentObject(app)
-            .withGlobalErrors(app)
-            .onAppear { app.showError(.server) }
-        }
-    }
-    return Harness()
 }

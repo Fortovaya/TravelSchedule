@@ -48,29 +48,29 @@ struct CitySearchView: View {
     }
     
     // MARK: - Dependencies
-    let onSelect: (String) -> Void
+    let onSelect: (StationLite) -> Void
     @EnvironmentObject private var app: AppState
     
     // MARK: - State
     @State private var searchText: String = ""
-    @State private var selectedCity: String? = nil
     @State private var showStations = false
-    @State private var allCities: [String] = []
     @State private var isLoading = false
     @State private var currentLoadedCount: Int = Constants.Paging.pageSize
+    
+    @State private var selectedCity: SettlementLite? = nil
+    @State private var allCities: [SettlementLite] = []
     
     private var isSearching: Bool {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines).count >= Constants.minSearchCharacters
     }
     
-    private var filteredCities: [String] {
+    private var filteredCities: [SettlementLite] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !q.isEmpty else { return allCities }
-        guard q.count >= Constants.minSearchCharacters else { return [] }
-        return allCities.filter { $0.localizedCaseInsensitiveContains(q) }
+        return allCities.filter { $0.title.localizedCaseInsensitiveContains(q) }
     }
     
-    private var visibleCities: [String] {
+    private var visibleCities: [SettlementLite] {
         let source = filteredCities
         let limit = min(currentLoadedCount, source.count)
         return Array(source.prefix(limit))
@@ -96,7 +96,7 @@ struct CitySearchView: View {
     private let cityService: any CityServiceProtocol
     
     // MARK: - Init
-    init(cityService: some CityServiceProtocol, onSelect: @escaping (String) -> Void) {
+    init(cityService: some CityServiceProtocol, onSelect: @escaping (StationLite) -> Void) {
         self.cityService = cityService
         self.onSelect = onSelect
     }
@@ -127,9 +127,11 @@ struct CitySearchView: View {
                    let stationService = try? APIFactory.makeStationService() {
                     StationSearchView(
                         stationService: stationService,
-                        city: city
+                        city: city.title
                     ) { station in
-                        onSelect("\(city) (\(station))")
+                        let title = "\(city.title) (\(station.title))"
+                        let code  = station.code
+                        onSelect(StationLite(title: title, code: code))
                         dismiss()
                     }
                 } else {
@@ -155,9 +157,9 @@ struct CitySearchView: View {
     }
     
     private var cityList: some View {
-        List(filteredCities, id: \.self) { city in
+        List(filteredCities) { city in
             HStack {
-                Text(city)
+                Text(city.title)
                     .font(.system(size: Constants.FontSize.city, weight: .regular))
                     .foregroundColor(.ypBlack)
                 Spacer()
@@ -176,6 +178,8 @@ struct CitySearchView: View {
         .listStyle(.plain)
     }
     
+    
+    
     private var notFoundView: some View {
         VStack {
             Spacer().frame(height: Constants.Offset.notFoundTop)
@@ -192,22 +196,25 @@ struct CitySearchView: View {
         loadWithGlobalError(
             app: app,
             task: {
-                let cities = try await cityService.getAllCities()
-                return cities.compactMap { $0.title }
+                let raw = try await cityService.getAllCities()
+                return raw.compactMap { item in
+                    guard
+                        let title = item.title,
+                        let code  = item.codes?.yandex_code
+                    else { return nil }
+                    return SettlementLite(title: title, code: code)
+                }
             },
-            onSuccess: { (cityTitles: [String]) in
+            onSuccess: { (cities: [SettlementLite]) in
                 var seen = Set<String>()
-                self.allCities = cityTitles
-                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                    .filter { !$0.isEmpty }
-                    .filter { seen.insert($0).inserted }
+                self.allCities = cities
+                    .filter { !$0.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                    .filter { seen.insert($0.title).inserted }
                     .sorted {
-                        $0.compare(
-                            $1,
-                            options: .caseInsensitive,
-                            range: nil,
-                            locale: Locale(identifier: "ru_RU")
-                        ) == .orderedAscending
+                        $0.title.compare($1.title,
+                                         options: .caseInsensitive,
+                                         range: nil,
+                                         locale: Locale(identifier: "ru_RU")) == .orderedAscending
                     }
                 self.currentLoadedCount = min(Constants.Paging.pageSize, self.allCities.count)
                 self.isLoading = false
@@ -215,8 +222,6 @@ struct CitySearchView: View {
         )
     }
 }
-
-
 
 #Preview {
     CitySearchView(

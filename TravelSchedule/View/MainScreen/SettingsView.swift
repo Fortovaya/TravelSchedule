@@ -12,7 +12,7 @@ import Observation
 struct SettingsView: View {
     
     @State private var model = SettingsViewModel()
-    @State private var cancellables = Set<AnyCancellable>()
+    @State private var cancelLables = Set<AnyCancellable>()
     
     private enum Theme {
         static let onColor: Color   = .ypBlue
@@ -65,6 +65,8 @@ struct SettingsView: View {
                 .environment(\.defaultMinListRowHeight, 60)
             }
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+            }
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(isPresented: Binding(
                 get: { model.showUserAgreement },
@@ -93,7 +95,7 @@ struct SettingsView: View {
                     .receive(on: DispatchQueue.main)
                     .sink { _ in
                     }
-                    .store(in: &cancellables)
+                    .store(in: &cancelLables)
             }
         }
     }

@@ -44,10 +44,8 @@ final class AppState: ObservableObject {
     ) async {
         guard remainingAttempts > 0 else { return }
         
-        // Пауза
         try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
         
-        // Пробуем ещё раз
         let success = await retry()
         if success {
             hideError()

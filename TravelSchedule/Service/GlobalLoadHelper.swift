@@ -30,8 +30,8 @@ func loadWithGlobalError<T: Sendable>(
     Task {
         do {
             let value = try await task()
-                app.hideError()
-                onSuccess(value)
+            app.hideError()
+            onSuccess(value)
         } catch {
             let state = classifyError(error)
             let retryAttempt: @Sendable () async -> Bool = {
@@ -53,6 +53,6 @@ func loadWithGlobalError<T: Sendable>(
                 maxRetries: maxRetries,
                 retry: retryAttempt
             )
-            }
         }
     }
+}

@@ -7,6 +7,13 @@
 
 import SwiftUI
 
+
+struct StationLite: Hashable, Identifiable {
+    var id = UUID()
+    let title: String
+    let code: String
+}
+
 struct RouteInputSectionView: View {
     
     private enum Constants {
@@ -58,25 +65,25 @@ struct RouteInputSectionView: View {
         }
     }
     
-    @State private var from: String = ""
-    @State private var to: String = ""
+    @State private var from: StationLite?
+    @State private var to: StationLite?
+    
     @State private var isShowingFromSearch = false
     @State private var isShowingToSearch = false
     @EnvironmentObject private var app: AppState
     private let cityService: CityServiceProtocol 
     
     let actionButton: () -> Void
-    let actionSearchButton: (_ from: String, _ to: String) -> Void
+    let actionSearchButton: (_ from: StationLite, _ to: StationLite) -> Void
     
     private var hasBothInputs: Bool {
-        !from.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !to.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        from != nil && to != nil
     }
     
     init(
         cityService: CityServiceProtocol,
         actionButton: @escaping () -> Void,
-        actionSearchButton: @escaping (_ from: String, _ to: String) -> Void
+        actionSearchButton: @escaping (_ from: StationLite, _ to: StationLite) -> Void
     ) {
         self.cityService = cityService
         self.actionButton = actionButton
@@ -127,8 +134,8 @@ struct RouteInputSectionView: View {
                 VStack(alignment: .leading, spacing: Constants.Spacing.field) {
                     Button { isShowingFromSearch = true } label: {
                         HStack {
-                            Text(from.isEmpty ? Constants.Placeholder.from : from)
-                                .foregroundColor(from.isEmpty ? Constants.Colors.textField : .ypBlackUniversal)
+                            Text(from?.title ?? Constants.Placeholder.from)
+                                .foregroundColor(from == nil ? Constants.Colors.textField : .ypBlackUniversal)
                                 .font(.system(size: Constants.FontSize.label, weight: .regular))
                             Spacer()
                         }
@@ -140,8 +147,8 @@ struct RouteInputSectionView: View {
                     
                     Button { isShowingToSearch = true } label: {
                         HStack {
-                            Text(to.isEmpty ? Constants.Placeholder.to : to)
-                                .foregroundColor(from.isEmpty ? Constants.Colors.textField : .ypBlackUniversal)
+                            Text(to?.title ?? Constants.Placeholder.to)
+                                .foregroundColor(to == nil ? Constants.Colors.textField : .ypBlackUniversal)
                                 .font(.system(size: Constants.FontSize.label, weight: .regular))
                             Spacer()
                         }
@@ -159,7 +166,7 @@ struct RouteInputSectionView: View {
     }
     
     private var squarePathButton: some View {
-        let isDisabled = from.isEmpty && to.isEmpty
+        let isDisabled = (from == nil && to == nil)
         
         return Button {
             withAnimation(.spring(response: Constants.Animation.swapSpringResponse,
@@ -179,8 +186,10 @@ struct RouteInputSectionView: View {
     
     private var searchButton: some View {
         Button {
-            actionSearchButton(from, to)
-        } label:{
+            if let from, let to {
+                actionSearchButton(from, to)
+            }
+        }label:{
             Text(Constants.Titles.searchButton)
                 .font(.system(size: Constants.FontSize.labelButton, weight: .bold))
                 .foregroundColor(Constants.Colors.cardBackground)

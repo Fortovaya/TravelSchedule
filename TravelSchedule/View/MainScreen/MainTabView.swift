@@ -8,7 +8,7 @@
 import SwiftUI
 
 enum Route: Hashable {
-    case carriers(from: String, to: String)
+    case carriers(from: StationLite, to: StationLite)
 }
 
 struct MainTabView: View {
@@ -62,7 +62,7 @@ struct MainTabView: View {
                         RouteInputSectionView(
                             cityService: cityService,
                             actionButton: {},
-                            actionSearchButton: { from, to in
+                            actionSearchButton: { (from: StationLite, to: StationLite) in
                                 path.append(.carriers(from: from, to: to))
                             }
                         )
@@ -71,10 +71,13 @@ struct MainTabView: View {
                                 case let .carriers(from, to):
                                     if let search = try? APIFactory.makeSearchService(),
                                        let carrier = try? APIFactory.makeCarrierService() {
-                                        CarrierListView(headerFrom: from,
-                                                        headerTo: to,
-                                                        searchService: search,
-                                                        carrierService: carrier
+                                        CarrierListView(
+                                            headerFrom: from.title,
+                                            headerTo: to.title,
+                                            fromStationCode: from.code,
+                                            toStationCode: to.code,
+                                            searchService: search,
+                                            carrierService: carrier
                                         )
                                     } else {
                                         ErrorStateView(state: .server)
