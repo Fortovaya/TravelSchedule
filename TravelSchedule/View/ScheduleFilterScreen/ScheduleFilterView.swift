@@ -9,19 +9,18 @@ import SwiftUI
 
 struct ScheduleFilterView: View {
     
-    @State private var selectedParts: Set<DayPart> = []
-    @State private var transfers: TransfersOption? = nil
+    @State private var model = ScheduleFilterViewModel()
     
     var onApply: ((Set<DayPart>, TransfersOption?) -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     
-    private var isApplyEnabled: Bool { !selectedParts.isEmpty && transfers != nil }
+    private var isApplyEnabled: Bool { !model.selectedParts.isEmpty && model.transfers != nil }
     
     var body: some View {
         ZStack {
             List {
-                DayPartSectionView(selectedParts: $selectedParts)
-                TransfersSectionView(transfers: $transfers)
+                DayPartSectionView(selectedParts: $model.selectedParts)
+                TransfersSectionView(transfers: $model.transfers)
             }
             .listStyle(.plain)
             .scrollIndicators(.hidden)
@@ -41,7 +40,7 @@ struct ScheduleFilterView: View {
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 0) {
                 Button {
-                    onApply?(selectedParts, transfers)
+                    onApply?(model.selectedParts, model.transfers)
                 } label: {
                     Text("Применить")
                         .font(.bold17)
