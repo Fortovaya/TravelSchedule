@@ -115,16 +115,24 @@ struct RouteInputSectionView: View {
         .padding(.top, 184)
         .animation(.easeInOut(duration: Constants.Animation.duration), value: hasBothInputs)
         .fullScreenCover(isPresented: $isShowingFromSearch) {
-            CitySearchView(cityService: cityService) { city in
-                from = city
-                isShowingFromSearch = false
-            }
+            CitySearchView(
+                cityService: cityService,
+                onSelect: { city in
+                    from = city
+                    isShowingFromSearch = false
+                },
+                app: app
+            )
         }
         .fullScreenCover(isPresented: $isShowingToSearch) {
-            CitySearchView(cityService: cityService) { city in
-                to = city
-                isShowingToSearch = false
-            }
+            CitySearchView(
+                cityService: cityService,
+                onSelect: { city in
+                    to = city
+                    isShowingToSearch = false
+                },
+                app: app
+            )
         }
     }
     
