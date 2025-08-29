@@ -8,7 +8,7 @@
 import SwiftUI
 
 enum Route: Hashable {
-    case carriers(from: String, to: String)
+    case carriers(from: StationLite, to: StationLite)
 }
 
 struct MainTabView: View {
@@ -58,27 +58,37 @@ struct MainTabView: View {
         ZStack(alignment: .bottom) {
             TabView {
                 NavigationStack(path: $path) {
-                    RouteInputSectionView(
-                        actionButton: {},
-                        actionSearchButton: { from, to in
-                            path.append(.carriers(from: from, to: to))
+                    if let cityService = try? APIFactory.makeCityService() {
+                        RouteInputSectionView(
+                            cityService: cityService,
+                            actionButton: {},
+                            actionSearchButton: { (from: StationLite, to: StationLite) in
+                                path.append(.carriers(from: from, to: to))
+                            }
+                        )
+                        .navigationDestination(for: Route.self) { route in
+                            switch route {
+                                case let .carriers(from, to):
+                                    if let search = try? APIFactory.makeSearchService(),
+                                       let carrier = try? APIFactory.makeCarrierService() {
+                                        CarrierListView(
+                                            headerFrom: from.title,
+                                            headerTo: to.title,
+                                            fromStationCode: from.code,
+                                            toStationCode: to.code,
+                                            searchService: search,
+                                            carrierService: carrier,
+                                            app: app
+                                        )
+                                    } else {
+                                        ErrorStateView(state: .server)
+                                            .task { app.showError(.server) }
+                                    }
+                            }
                         }
-                    )
-                    .navigationDestination(for: Route.self) { route in
-                        switch route {
-                            case let .carriers(from, to):
-                                if let search = try? APIFactory.makeSearchService(),
-                                   let carrier = try? APIFactory.makeCarrierService() {
-                                    CarrierListView(headerFrom: from,
-                                                    headerTo: to,
-                                                    searchService: search,
-                                                    carrierService: carrier
-                                    )
-                                } else {
-                                    ErrorStateView(state: .server)
-                                        .task { app.showError(.server) }
-                                }
-                        }
+                    } else {
+                        ErrorStateView(state: .server)
+                            .task { app.showError(.server) }
                     }
                 }
                 .toolbar(.hidden, for: .navigationBar)

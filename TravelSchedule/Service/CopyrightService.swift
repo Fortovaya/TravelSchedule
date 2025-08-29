@@ -9,12 +9,12 @@ import OpenAPIRuntime
 
 typealias CopyrightResponse = Components.Schemas.CopyrightResponse
 
-protocol CopyrightServiceProtocol {
+protocol CopyrightServiceProtocol: Actor {
     /// данные о Яндекс Расписаниях: URL сервиса, баннер в различных цветовых представлениях и уведомительный текст
     func getCopyright() async throws -> CopyrightResponse
 }
 
-final class CopyrightService: CopyrightServiceProtocol {
+final actor CopyrightService: CopyrightServiceProtocol {
     
     private let client: Client
     private let apikey: String

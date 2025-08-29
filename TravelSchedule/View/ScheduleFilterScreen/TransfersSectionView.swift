@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum TransfersOption: String, Identifiable, Hashable {
+enum TransfersOption: String, Identifiable, Hashable, Sendable {
     case yes, no
     var id: Self { self }
     var title: String { self == .yes ? "Да" : "Нет" }

@@ -9,12 +9,12 @@ import OpenAPIRuntime
 
 typealias ThreadStationsResponse = Components.Schemas.ThreadStationsResponse
 
-protocol ThreadServiceProtocol {
+protocol ThreadServiceProtocol: Actor{
     /// список станций следования нитки по указанному идентификатору нитки, информация о каждой нитке и о промежуточных станциях нитки
     func getRouteStations(uid: String) async throws -> ThreadStationsResponse
 }
 
-final class ThreadService: ThreadServiceProtocol {
+final actor ThreadService: ThreadServiceProtocol {
     
     private let client: Client
     private let apikey: String

@@ -3,4 +3,22 @@
    uuid = "197AB883-9507-493C-A61A-C01BE639799E"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "CBC56C37-1BA7-4E96-BD7F-4DF693784002"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../../../var/folders/0j/kh30m_7d39j9ghbwbbdt4rgc0000gn/T/swift-generated-sources/@__swiftmacro_14TravelSchedule0025CitySearchViewswift_jqFBgfMX144_0_33_FA84097EACBF267605C080468AB88AF5Ll7PreviewfMf0_.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1"
+            endingLineNumber = "1"
+            landmarkName = "$s14TravelSchedule0025CitySearchViewswift_jqFBgfMX144_0_33_FA84097EACBF267605C080468AB88AF5Ll7PreviewfMf0_15PreviewRegistryfMu_"
+            landmarkType = "37">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

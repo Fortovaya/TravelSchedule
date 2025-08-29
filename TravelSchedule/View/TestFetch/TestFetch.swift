@@ -7,9 +7,10 @@
 
 import OpenAPIRuntime
 import OpenAPIURLSession
+import Foundation
 
 enum TestAPI {
-    static let apiKey = "17a7b5d3-ce93-4508-bdd7-5058909c0fbd"
+    static let apiKey = "de28ff95-582d-46dc-8fec-25a141173fda"
     static var client: Client {
         get throws {
             Client(
@@ -157,35 +158,6 @@ enum TestAPI {
             }
         }
     }
-    
-    static func testFetchCarrier2() {
-        Task {
-            do {
-                let service = CarrierService(
-                    client: try client,
-                    apikey: apiKey
-                )
-                
-                print("Fetching carriers...")
-                let carriers = try await service.getCarrierInfo(code: "680")
-                print("Successfully fetched carriers")
-                
-                // Вызов твоего метода для просмотра структуры:
-                service.debugCarrierStructure(carriers)
-                
-            } catch {
-                print("Error fetching carriers: \(error)")
-            }
-        }
-    }
 }
 
-enum APIFactory {
-    static func makeSearchService() throws -> SearchServiceProtocol {
-        try SearchService(client: TestAPI.client, apikey: TestAPI.apiKey)
-    }
-    
-    static func makeCarrierService() throws -> CarrierServiceProtocol {
-        try CarrierService(client: TestAPI.client, apikey: TestAPI.apiKey)
-    }
-}
+
