@@ -49,42 +49,21 @@ struct StationSearchView: View {
     let city: String
     let onSelect: (StationLite) -> Void
     
-    @EnvironmentObject private var app: AppState
-    
-    // MARK: - State
-    @State private var searchText: String = ""
-    @State private var allStations: [StationLite] = []
-    @State private var isLoading = false
-    @State private var currentLoadedCount: Int = Constants.Paging.pageSize
-    
-    private var filteredStations: [StationLite] {
-        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !q.isEmpty else { return allStations }
-        return allStations.filter { $0.title.localizedCaseInsensitiveContains(q) }
-    }
-    
-    private var visibleStations: [StationLite] {
-        let limit = min(currentLoadedCount, filteredStations.count)
-        return Array(filteredStations.prefix(limit))
-    }
-    
+    @State private var model: StationSearchViewModel
     @Environment(\.dismiss) private var dismiss
     
-    private let stationService: any StationServiceProtocol
-    
-    init(stationService: some StationServiceProtocol, city: String, onSelect: @escaping (StationLite) -> Void) {
-        self.stationService = stationService
+    init(stationService: some StationServiceProtocol, city: String, onSelect: @escaping (StationLite) -> Void, app: AppState) {
         self.city = city
         self.onSelect = onSelect
+        _model = State(initialValue: StationSearchViewModel(stationService: stationService, city: city, app: app))
     }
     
-    // MARK: - Body
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 searchField
                 
-                if filteredStations.isEmpty {
+                if model.filteredStations.isEmpty {
                     notFoundView
                 } else {
                     stationList
@@ -95,24 +74,24 @@ struct StationSearchView: View {
             .navigationBarBackButtonHidden(false)
             .toolbarRole(.editor)
             .task {
-                await loadStations()
+                await model.loadStations()
             }
-            .onChange(of: searchText) {
-                currentLoadedCount = min(Constants.Paging.pageSize, filteredStations.count)
+            .onChange(of: model.searchText) {
+                model.currentLoadedCount = min(Constants.Paging.pageSize, model.filteredStations.count)
             }
         }
         .tint(.ypBlack)
     }
     
     private var searchField: some View {
-        SearchTextField(text: $searchText, placeholder: "Введите запрос")
+        SearchTextField(text: $model.searchText, placeholder: "Введите запрос")
             .padding(.horizontal, Constants.Padding.horizontal)
             .padding(.top, Constants.Padding.searchTop)
             .padding(.bottom, Constants.Padding.searchBottom)
     }
     
     private var stationList: some View {
-        List(filteredStations, id: \.self) { station in
+        List(model.filteredStations, id: \.self) { station in
             HStack {
                 Text(station.title)
                     .font(.system(size: Constants.FontSize.station, weight: .regular))
@@ -139,40 +118,6 @@ struct StationSearchView: View {
                 .font(.system(size: Constants.FontSize.notFound, weight: .bold))
                 .foregroundColor(.ypBlack)
             Spacer()
-        }
-    }
-    
-    private func loadStations() async {
-        isLoading = true
-        loadWithGlobalError(
-            app: app,
-            task: {
-                let raw = try await stationService.getStations(for: self.city)
-                return raw.compactMap { s -> StationLite? in
-                    guard let title = s.title else { return nil }
-                    let code = s.code ?? s.codes?.yandex_code
-                    guard let code else { return nil }
-                    return StationLite(title: title, code: code)
-                }
-            },
-            onSuccess: { (result: [StationLite]) in
-                self.allStations = result
-                self.currentLoadedCount = min(Constants.Paging.pageSize, result.count)
-                self.isLoading = false
-            }
-        )
-    }
-    
-    private func loadMoreIfNeeded(currentItem: StationLite) {
-        guard !filteredStations.isEmpty else { return }
-        guard currentLoadedCount < filteredStations.count else { return }
-        
-        if let index = visibleStations.firstIndex(where: { $0.id == currentItem.id }),
-           index >= visibleStations.count - Constants.Paging.prefetchThreshold {
-            currentLoadedCount = min(
-                currentLoadedCount + Constants.Paging.pageSize,
-                filteredStations.count
-            )
         }
     }
 }

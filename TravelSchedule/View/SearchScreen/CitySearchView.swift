@@ -82,13 +82,15 @@ struct CitySearchView: View {
                    let stationService = try? APIFactory.makeStationService() {
                     StationSearchView(
                         stationService: stationService,
-                        city: city.title
-                    ) { station in
-                        let title = "\(city.title) (\(station.title))"
-                        let code  = station.code
-                        onSelect(StationLite(title: title, code: code))
-                        dismiss()
-                    }
+                        city: city.title,
+                        onSelect: { station in
+                            let title = "\(city.title) (\(station.title))"
+                            let code  = station.code
+                            onSelect(StationLite(title: title, code: code))
+                            dismiss()
+                        },
+                        app: model.app
+                    )
                 } else {
                     ErrorStateView(state: .server)
                         .task { model.app.showError(.server) }
